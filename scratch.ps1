@@ -1,27 +1,45 @@
-Add-Type -AssemblyName System.Device #Required to access System.Device.Location namespace
-$GeoWatcher = New-Object System.Device.Location.GeoCoordinateWatcher #Create the required object
-$GeoWatcher.Start() #Begin resolving current locaton
+[cmdletbinding()]
+Param()
+
+$VerbosePreference = 'Continue'
+
+# Get location of user
+Add-Type -AssemblyName System.Device 
+
+$GeoWatcher = New-Object System.Device.Location.GeoCoordinateWatcher
+$GeoWatcher.Start()
 
 while (($GeoWatcher.Status -ne 'Ready') -and ($GeoWatcher.Permission -ne 'Denied')) {
-    Start-Sleep -Milliseconds 100 #Wait for discovery.
+    Start-Sleep -Milliseconds 100 
 }  
 
-if ($GeoWatcher.Permission -eq 'Denied'){
+if ($GeoWatcher.Permission -eq 'Denied') {
     Write-Error 'Access Denied for Location Information'
-} else {
-    $GeoWatcher.Position.Location | Select Latitude,Longitude #Select the relevent results.
 }
-
-$Lat = $GeoWatcher.Position.Location.Latitude
-$Lng = $GeoWatcher.Position.Location.Longitude
-
+else {    
+    $Lat = $GeoWatcher.Position.Location.Latitude
+    $Lng = $GeoWatcher.Position.Location.Longitude
+}
 
 # Return sunrise/sunset
 $Daytime = (invoke-restmethod "https://api.sunrise-sunset.org/json?lat=$Lat&lng=$Lng").results
 
 # Convert to local time
-($Daytime.Sunrise | Get-Date).ToLocalTime()
-($Daytime.Sunset | Get-Date).ToLocalTime()
+$Sunrise = ($Daytime.Sunrise | Get-Date).ToLocalTime()
+$Sunset = ($Daytime.Sunset | Get-Date).ToLocalTime()
 
-# Check OS version
-[System.Environment]::OSVersion.Version
+$CurrentTime = Get-Date
+
+# Set theme
+if ($CurrentTime -gt $Sunrise -and $CurrentTime -lt $Sunset) {
+    Set-ItemProperty -Path HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize -Name 'SystemUsesLightTheme' -Value 1
+    Set-ItemProperty -Path HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize -Name 'AppsUseLightTheme' -Value 1
+    Write-Verbose 'Theme set to light.'
+}
+else {
+    Set-ItemProperty -Path HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize -Name 'SystemUsesLightTheme' -Value 0
+    Set-ItemProperty -Path HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize -Name 'AppsUseLightTheme' -Value 0
+    Write-Verbose 'Theme set to dark.'
+}
+
+
