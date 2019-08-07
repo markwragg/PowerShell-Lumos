@@ -43,7 +43,7 @@ Function Invoke-Lumos {
             Throw 'Could not get sunrise/sunset data for the current user.'
         }
 
-        if ($CurrentTime -gt $DayLight.Sunrise -and $CurrentTime -lt $DayLight.Sunset) {
+        if ($CurrentTime -ge $DayLight.Sunrise -and $CurrentTime -lt $DayLight.Sunset) {
             $Lumos = 1
         }
         else {

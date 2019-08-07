@@ -3,7 +3,7 @@ Function Update-LumosScheduledTask {
         .SYNOPSIS
             Updates the run times for the Lumus Scheduled Task with the current sunrise/sunset values.
     #>      
-    [cmdletbinding(DefaultParameterSetName='Dark')]
+    [cmdletbinding(SupportsShouldProcess)]
     Param()
 
     $UserLocation = Get-UserLocation
@@ -19,5 +19,7 @@ Function Update-LumosScheduledTask {
     $SunsetTrigger = New-ScheduledTaskTrigger -At $DayLight.Sunset -Daily
     $LogonTrigger = New-ScheduledTaskTrigger -AtLogOn
 
-    Set-ScheduledTask -TaskName 'Lumos' -Trigger  $LogonTrigger,$SunriseTrigger,$SunsetTrigger
+    if ($PSCmdlet.ShouldProcess('Update Lumos Scheduled Task')){
+        Set-ScheduledTask -TaskName 'Lumos' -Trigger  $LogonTrigger,$SunriseTrigger,$SunsetTrigger
+    }
 }
