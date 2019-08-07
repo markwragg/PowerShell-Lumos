@@ -47,6 +47,8 @@ Invoke-Lomus -Light -LightWallpaper c:\wallpaper\light.png
 
 If you'd like Windows to automatically switch from Light to Dark mode based on your local sunrise/sunset times, you can use the following cmdlet to add a Scheduled Task to do so:
 
+> Note this may require your PowerShell terminal to be running as Administrator.
+
 ```PowerShell
 Register-LumosScheduledTask
 ```
