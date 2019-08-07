@@ -4,7 +4,7 @@
 
 A PowerShell module for switching Windows 10 between light and dark themes depending on whether it is day or night.
 
-## Installation
+![Invoke-Lumos](Invoke-Lumos.gif)
 
 This module is published in the PowerShell Gallery, so can be installed via:
 
