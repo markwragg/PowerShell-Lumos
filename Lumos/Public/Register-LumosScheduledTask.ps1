@@ -3,7 +3,7 @@ Function Register-LumosScheduledTask {
         .SYNOPSIS
             Registers a Scheduled Task to run Lumos automatically.
     #>      
-    [cmdletbinding(DefaultParameterSetName='Dark')]
+    [cmdletbinding()]
     Param(
         [switch]
         $ExcludeSystem,
@@ -17,6 +17,7 @@ Function Register-LumosScheduledTask {
         [string]
         $LightWallpaper
     )
+
     $ArgumentDefaults = '-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden'
     
     $LumosArgument = "$ArgumentDefaults -Command Invoke-Lumos"
@@ -40,5 +41,6 @@ Function Register-LumosScheduledTask {
 
     New-ScheduledTask -Action $LumosAction,$UpdateAction -Principal $Principal | Register-ScheduledTask -TaskName 'Lumos' -Force
 
+    # Run Update-LumosScheduledTask to add triggers
     Update-LumosScheduledTask
 }

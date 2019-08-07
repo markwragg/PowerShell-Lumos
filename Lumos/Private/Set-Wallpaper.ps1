@@ -4,7 +4,7 @@ Function Set-Wallpaper {
             Applies a specified wallpaper to the current user's desktop
         
         .PARAMETER Image
-            Provide the exact path to the image
+            Provide the full path to the image
         
         .EXAMPLE
             Set-WallPaper -Image "C:\Wallpaper\Default.jpg"     
