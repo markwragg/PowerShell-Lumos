@@ -1,5 +1,7 @@
 # PowerShell-Lumos
 
+[![Build status](https://ci.appveyor.com/api/projects/status/awhysa8j9ftgh3an?svg=true)](https://ci.appveyor.com/project/markwragg/powershell-influx) ![Test Coverage](https://img.shields.io/badge/coverage-0%grey.svg?maxAge=60)
+
 A PowerShell module for switching Windows 10 between light and dark themes depending on whether it is day or night.
 
 ## Installation
