@@ -1,4 +1,4 @@
-# LumOS
+# PowerShell-Lumos
 
 A PowerShell module for switching Windows 10 between light and dark themes depending on whether it is day or night.
 
