@@ -3,30 +3,82 @@ Function Invoke-Lumos {
         .SYNOPSIS
             Sets the Windows Theme to light or dark mode dependent on time of day.
     #>      
-    [cmdletbinding()]
-    Param()
+    [cmdletbinding(DefaultParameterSetName='Dark')]
+    Param(
+        [Parameter(ParameterSetName='Dark')]    
+        [switch]
+        $Dark,
 
-    $CurrentTime = Get-Date
-    $UserLocation = Get-UserLocation
+        [Parameter(ParameterSetName='Light')]
+        [switch]
+        $Light,
 
-    if ($UserLocation) {
-        $DayLight = Get-LocalDaylight -Latitude $UserLocation.Latitude -Longitude $UserLocation.Longitude
+        [switch]
+        $ExcludeSystem,
+
+        [switch]
+        $ExcludeApps,
+
+        [string]
+        $DarkWallpaper,
+
+        [string]
+        $LightWallpaper
+    )
+
+    if ($Dark) {
+        $Lumos = 0
+    }
+    elseif ($Light) {
+        $Lumos = 1
     }
     else {
-        Throw 'Could not get sunrise/sunset data for the current user.'
+        $CurrentTime = Get-Date
+        $UserLocation = Get-UserLocation
+
+        if ($UserLocation) {
+            $DayLight = Get-LocalDaylight -Latitude $UserLocation.Latitude -Longitude $UserLocation.Longitude
+        }
+        else {
+            Throw 'Could not get sunrise/sunset data for the current user.'
+        }
+
+        if ($CurrentTime -gt $DayLight.Sunrise -and $CurrentTime -lt $DayLight.Sunset) {
+            $Lumos = 1
+        }
+        else {
+            $Lumos = 0
+        }
     }
-    
+
+    Switch ($Lumos) {
+        0 { 
+            $Status = 'Dark'
+            if ($DarkWallpaper) { $Wallpaper = $DarkWallpaper }
+        }
+        1 { 
+            $Status = 'Light' 
+            if ($LightWallpaper) { $Wallpaper = $LightWallpaper }
+        }
+        default { 
+            $Status = 'Undefined'
+        }
+    }
+
     # Set theme
     $ThemeRegKey = 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize'
 
-    if ($CurrentTime -gt $DayLight.Sunrise -and $CurrentTime -lt $DayLight.Sunset) {
-        Set-ItemProperty -Path $ThemeRegKey -Name 'SystemUsesLightTheme' -Value 1
-        Set-ItemProperty -Path $ThemeRegKey -Name 'AppsUseLightTheme' -Value 1
-        Write-Verbose 'Theme set to light.'
+    if (-not $ExcludeSystem) {
+        Write-Verbose "Setting System to $Status Theme.."
+        Set-ItemProperty -Path $ThemeRegKey -Name 'SystemUsesLightTheme' -Value $Lumos
+        
     }
-    else {
-        Set-ItemProperty -Path $ThemeRegKey -Name 'SystemUsesLightTheme' -Value 0
-        Set-ItemProperty -Path $ThemeRegKey -Name 'AppsUseLightTheme' -Value 0
-        Write-Verbose 'Theme set to dark.'
+    if (-not $ExcludeApps) {
+        Write-Verbose "Setting Apps to $Status Theme.."
+        Set-ItemProperty -Path $ThemeRegKey -Name 'AppsUseLightTheme' -Value $Lumos
+    }
+
+    if ($Wallpaper) {
+        Set-Wallpaper $Wallpaper
     }
 }
