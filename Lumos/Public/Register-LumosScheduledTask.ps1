@@ -35,9 +35,14 @@ Function Register-LumosScheduledTask {
         $LumosArgument = $LumosArgument + " -DarkWallpaper '$DarkWallpaper'"
     }
     
+    # Get localized value for local administrator group
+    $adminSid = [System.Security.Principal.WellKnownSidType]::BuiltinAdministratorsSid
+    $adminSecId = New-Object System.Security.Principal.SecurityIdentifier($adminSid, $null)
+    $localizedAdminGroup = $adminSecId.Translate([System.Security.Principal.NTAccount]).Value
+
     $LumosAction = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument $LumosArgument
     $UpdateAction = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument "$ArgumentDefaults -Command Update-LumosScheduledTask"
-    $Principal = New-ScheduledTaskPrincipal -GroupId "BUILTIN\Administrators" -RunLevel Highest
+    $Principal = New-ScheduledTaskPrincipal -GroupId $localizedAdminGroup -RunLevel Highest
 
     New-ScheduledTask -Action $LumosAction,$UpdateAction -Principal $Principal | Register-ScheduledTask -TaskName 'Lumos' -Force
 
