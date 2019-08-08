@@ -41,7 +41,7 @@ Invoke-Lumos -Light -ExcludeApps
 If you'd like your wallpaper to change with the theme, you can specify a path to these:
 
 ```PowerShell
-Invoke-Lumos -Dark -DarkWallpaper c:\wallpaper\dark.png 
+Invoke-Lumos -Dark -DarkWallpaper c:\wallpaper\dark.png
 Invoke-Lomus -Light -LightWallpaper c:\wallpaper\light.png
 ```
 
