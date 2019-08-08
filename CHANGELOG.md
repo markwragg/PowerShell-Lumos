@@ -4,7 +4,7 @@
 
 * [BugFix] Added code to localize the local administrator group name so that `Register-LumosScheduledTask` would work on non-English systems. [#2](https://github.com/markwragg/PowerShell-Lumos/pull/2)  - Thanks [@manualbashing](https://github.com/AspenForester)
 
-## [1.0.4] - 2019-09-07
+## [1.0.4] - 2019-08-07
 
 Initial public release.
 
