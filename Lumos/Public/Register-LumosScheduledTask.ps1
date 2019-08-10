@@ -43,8 +43,9 @@ Function Register-LumosScheduledTask {
     $LumosAction = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument $LumosArgument
     $UpdateAction = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument "$ArgumentDefaults -Command Update-LumosScheduledTask"
     $Principal = New-ScheduledTaskPrincipal -GroupId $localizedAdminGroup -RunLevel Highest
+    $TaskSettings = New-ScheduledTaskSettingsSet -StartWhenAvailable
 
-    New-ScheduledTask -Action $LumosAction,$UpdateAction -Principal $Principal | Register-ScheduledTask -TaskName 'Lumos' -Force
+    New-ScheduledTask -Action $LumosAction,$UpdateAction -Principal $Principal -Settings $TaskSettings | Register-ScheduledTask -TaskName 'Lumos' -Force
 
     # Run Update-LumosScheduledTask to add triggers
     Update-LumosScheduledTask
