@@ -24,7 +24,7 @@ Function Get-LocalDaylight {
     )
 
     # Return sunrise/sunset
-    $Daylight = (invoke-restmethod "https://api.sunrise-sunset.org/json?lat=$Latitude&lng=$Longitude").results
+    $Daylight = (Invoke-RestMethod "https://api.sunrise-sunset.org/json?lat=$Latitude&lng=$Longitude").results
 
     # Convert to local time datetime objects
     [pscustomobject]@{
