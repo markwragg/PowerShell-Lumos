@@ -42,7 +42,7 @@ If you'd like your wallpaper to change with the theme, you can specify a path to
 
 ```PowerShell
 Invoke-Lumos -Dark -DarkWallpaper c:\wallpaper\dark.png
-Invoke-Lomus -Light -LightWallpaper c:\wallpaper\light.png
+Invoke-Lumos -Light -LightWallpaper c:\wallpaper\light.png
 ```
 
 If you'd like Windows to automatically switch from Light to Dark mode based on your local sunrise/sunset times, you can use the following cmdlet to add a Scheduled Task to do so:
