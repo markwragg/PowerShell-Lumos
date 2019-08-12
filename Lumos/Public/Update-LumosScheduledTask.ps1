@@ -21,5 +21,6 @@ Function Update-LumosScheduledTask {
 
     if ($PSCmdlet.ShouldProcess('Update Lumos Scheduled Task')){
         Set-ScheduledTask -TaskName 'Lumos' -Trigger  $LogonTrigger,$SunriseTrigger,$SunsetTrigger
+        Stop-Process -ProcessName explorer
     }
 }
