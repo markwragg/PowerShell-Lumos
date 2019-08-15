@@ -45,6 +45,12 @@ Invoke-Lumos -Dark -DarkWallpaper c:\wallpaper\dark.png
 Invoke-Lumos -Light -LightWallpaper c:\wallpaper\light.png
 ```
 
+If you'd like change the theme of your Office ProPlus installation you can pass the `IncludeOfficeProPlus` flag. It will automaticly update your Office Clients to switch to either the Dark or Light mode. Note that it does require a restart of your Office Applications before it takes effect.
+
+```PowerShell
+Invoke-Lumos -Dark -IncludeOfficeProPlus
+```
+
 If you'd like Windows to automatically switch from Light to Dark mode based on your local sunrise/sunset times, you can use the following cmdlet to add a Scheduled Task to do so:
 
 > Note this may require your PowerShell terminal to be running as Administrator.

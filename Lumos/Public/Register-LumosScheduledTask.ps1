@@ -2,7 +2,7 @@ Function Register-LumosScheduledTask {
     <#
         .SYNOPSIS
             Registers a Scheduled Task to run Lumos automatically.
-    #>      
+    #>
     [cmdletbinding()]
     Param(
         [switch]
@@ -10,6 +10,9 @@ Function Register-LumosScheduledTask {
 
         [switch]
         $ExcludeApps,
+
+        [switch]
+        $IncludeOfficeProPlus,
 
         [string]
         $DarkWallpaper,
@@ -19,22 +22,25 @@ Function Register-LumosScheduledTask {
     )
 
     $ArgumentDefaults = '-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden'
-    
+
     $LumosArgument = "$ArgumentDefaults -Command Invoke-Lumos"
-    
-    If ($ExcludeSystem) { 
-        $LumosArgument = $LumosArgument + " -ExcludeSystem" 
+
+    If ($ExcludeSystem) {
+        $LumosArgument = $LumosArgument + " -ExcludeSystem"
     }
-    If ($ExcludeApps) { 
-        $LumosArgument = $LumosArgument + " -ExcludeApps" 
+    If ($ExcludeApps) {
+        $LumosArgument = $LumosArgument + " -ExcludeApps"
     }
-    If ($LightWallpaper) { 
-        $LumosArgument = $LumosArgument + " -LightWallpaper '$LightWallpaper'" 
+    If ($IncludeOfficeProPlus) {
+        $LumosArgument = $LumosArgument + " -IncludeOfficeProPlus"
+    }
+    If ($LightWallpaper) {
+        $LumosArgument = $LumosArgument + " -LightWallpaper '$LightWallpaper'"
     }
     If ($DarkWallpaper) {
         $LumosArgument = $LumosArgument + " -DarkWallpaper '$DarkWallpaper'"
     }
-    
+
     # Get localized value for local administrator group
     $adminSid = [System.Security.Principal.WellKnownSidType]::BuiltinAdministratorsSid
     $adminSecId = New-Object System.Security.Principal.SecurityIdentifier($adminSid, $null)
