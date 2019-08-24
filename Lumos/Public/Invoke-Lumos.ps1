@@ -35,6 +35,9 @@ Function Invoke-Lumos {
     elseif ($Light) {
         $Lumos = 1
     }
+    elseif ($MacOS) {
+        Throw 'You must specify -Dark or -Light on MacOS.'
+    }
     else {
         $CurrentTime = Get-Date
         $UserLocation = Get-UserLocation
@@ -68,38 +71,72 @@ Function Invoke-Lumos {
         }
     }
 
-    # Set theme
-    $ThemeRegKey = 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize'
-    $OfficeThemeRegKey = 'HKCU:\Software\Microsoft\Office\16.0\Common'
+    if ($IsMacOS) {
+        ### MacOS ###
+        $MacCommand = If ($Lumos -eq 0) {
+            'tell application \"System Events\" to tell appearance preferences to set dark mode to dark mode'
+        }
+        Else {
+            'tell application \"System Events\" to tell appearance preferences to set dark mode to not dark mode'
+        }
 
-    if (-not $ExcludeSystem) {
-        Write-Verbose "Setting System to $Status Theme.."
-        Set-ItemProperty -Path $ThemeRegKey -Name 'SystemUsesLightTheme' -Value $Lumos
-    }
-    if (-not $ExcludeApps) {
-        Write-Verbose "Setting Apps to $Status Theme.."
-        Set-ItemProperty -Path $ThemeRegKey -Name 'AppsUseLightTheme' -Value $Lumos
-    }
+        Invoke-AppleScript -Command $MacCommand
+        
+        if ($ExcludeSystem) {
+            Write-Error '-ExcludeSystem is not currently supported on MacOS.'
+        }
 
-    if ($IncludeOfficeProPlus) {
-        $proPlusThemeValue = if ($Lumos -eq 0) { 4 } else { 0 }
+        if ($ExcludeApps) {
+            Write-Error '-ExcludeApps is not currently supported on MacOS.'
+        }
 
-        Write-Verbose "Setting OfficeProPlus to $Status with value: $proPlusThemeValue .."
+        if ($IncludeOfficeProPlus) {
+            Write-Error '-OfficeProPlus is not currently supported on MacOS.'
+        }
 
-        Set-ItemProperty -Path $OfficeThemeRegKey -Name 'UI Theme' -Value $proPlusThemeValue -Type DWORD
-
-        Get-ChildItem -Path ($OfficeThemeRegKey + "\Roaming\Identities\") | ForEach-Object {
-            $identityPath = ($_.Name.Replace('HKEY_CURRENT_USER', 'HKCU:') + "\Settings\1186\{00000000-0000-0000-0000-000000000000}");
-
-            if (Get-ItemProperty -Path $identityPath -Name 'Data' -ErrorAction Ignore) {
-                Write-Verbose 'Active identity path for ProPlus installation: ' $identityPath
-
-                Set-ItemProperty -Path $identityPath -Name 'Data' -Value ([byte[]]($proPlusThemeValue, 0, 0, 0)) -Type Binary
-            }
+        if ($Wallpaper) {
+            $MacCommand = 'tell application "System Events" to tell current desktop to set picture to "' + $Wallpaper + '"'
+            Invoke-AppleScript -Command $MacCommand
         }
     }
+    elseif ($IsLinux) {
+        ### Linux ###
+        Throw 'Linux is not currently supported by this module.'
+    }
+    else {
+        ### Windows ###
+        $ThemeRegKey = 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize'
+        $OfficeThemeRegKey = 'HKCU:\Software\Microsoft\Office\16.0\Common'
 
-    if ($Wallpaper) {
-        Set-Wallpaper $Wallpaper
+        if (-not $ExcludeSystem) {
+            Write-Verbose "Setting System to $Status Theme.."
+            Set-ItemProperty -Path $ThemeRegKey -Name 'SystemUsesLightTheme' -Value $Lumos
+        }
+        if (-not $ExcludeApps) {
+            Write-Verbose "Setting Apps to $Status Theme.."
+            Set-ItemProperty -Path $ThemeRegKey -Name 'AppsUseLightTheme' -Value $Lumos
+        }
+
+        if ($IncludeOfficeProPlus) {
+            $proPlusThemeValue = if ($Lumos -eq 0) { 4 } else { 0 }
+
+            Write-Verbose "Setting OfficeProPlus to $Status with value: $proPlusThemeValue .."
+
+            Set-ItemProperty -Path $OfficeThemeRegKey -Name 'UI Theme' -Value $proPlusThemeValue -Type DWORD
+
+            Get-ChildItem -Path ($OfficeThemeRegKey + "\Roaming\Identities\") | ForEach-Object {
+                $identityPath = ($_.Name.Replace('HKEY_CURRENT_USER', 'HKCU:') + "\Settings\1186\{00000000-0000-0000-0000-000000000000}");
+
+                if (Get-ItemProperty -Path $identityPath -Name 'Data' -ErrorAction Ignore) {
+                    Write-Verbose 'Active identity path for ProPlus installation: ' $identityPath
+
+                    Set-ItemProperty -Path $identityPath -Name 'Data' -Value ([byte[]]($proPlusThemeValue, 0, 0, 0)) -Type Binary
+                }
+            }
+        }
+
+        if ($Wallpaper) {
+            Set-Wallpaper $Wallpaper
+        }
     }
 }
