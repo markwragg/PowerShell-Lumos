@@ -1,6 +1,6 @@
 # Change Log
 
-## [1.0.22] - 2019-08-24
+## [1.0.24] - 2019-08-24
 
 * [Feature] Added support to change theme and Wallpaper on MacOS. Thanks [@TylerLeonhardt](https://github.com/TylerLeonhardt) for the suggestion!
 
