@@ -35,7 +35,7 @@ Function Invoke-Lumos {
     elseif ($Light) {
         $Lumos = 1
     }
-    elseif ($MacOS) {
+    elseif ($IsMacOS) {
         Throw 'You must specify -Dark or -Light on MacOS.'
     }
     else {
