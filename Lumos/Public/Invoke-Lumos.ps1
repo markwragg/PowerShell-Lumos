@@ -36,9 +36,13 @@ Function Invoke-Lumos {
         $Lumos = 1
     }
     elseif ($IsMacOS) {
-        Throw 'You must specify -Dark or -Light on MacOS.'
+        ### MacOS ###
+
+        # Leaving Lumos as undefined on MacOS will make it just alternate to whatever mode it currently is not
+        $Lumos = 'Undefined'
     }
     else {
+        ### Windows ###
         $CurrentTime = Get-Date
         $UserLocation = Get-UserLocation
 
@@ -73,10 +77,13 @@ Function Invoke-Lumos {
 
     if ($IsMacOS) {
         ### MacOS ###
-        $MacCommand = If ($Lumos -eq 0) {
-            'tell application \"System Events\" to tell appearance preferences to set dark mode to dark mode'
+        $MacCommand = if ($Lumos -eq 0) {
+            'tell application \"System Events\" to tell appearance preferences to set dark mode to true'
         }
-        Else {
+        elseif ($Lumos -eq 1) {
+            'tell application \"System Events\" to tell appearance preferences to set dark mode to false'
+        }
+        else {
             'tell application \"System Events\" to tell appearance preferences to set dark mode to not dark mode'
         }
 
