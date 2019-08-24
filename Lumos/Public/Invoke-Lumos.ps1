@@ -102,7 +102,7 @@ Function Invoke-Lumos {
         }
 
         if ($Wallpaper) {
-            $MacCommand = 'tell application "System Events" to tell current desktop to set picture to "' + $Wallpaper + '"'
+            $MacCommand = "tell application \`"System Events\`" to tell current desktop to set picture to \`"$Wallpaper\`""
             Invoke-AppleScript -Command $MacCommand
         }
     }
