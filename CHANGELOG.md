@@ -1,5 +1,9 @@
 # Change Log
 
+## [1.0.22] - 2019-08-24
+
+* [Feature] Added support to change theme and Wallpaper on MacOS. Thanks [@TylerLeonhardt](https://github.com/TylerLeonhardt) for the suggestion!
+
 ## [1.0.20] - 2019-08-16
 
 * [Feature] Added `-IncludeOfficeProPlus` switch to `Invoke-Lumos` to allow switching of Office applications between Dark and Light themes. [#7](https://github.com/markwragg/PowerShell-Lumos/pull/7) - Thanks [@appieschot](https://github.com/appieschot)
