@@ -4,7 +4,11 @@
 
 A PowerShell module for switching Windows 10 and MacOS Mojave between light and dark themes depending on whether it is day or night.
 
-![Invoke-Lumos](Invoke-Lumos.gif)
+__Windows:__
+![Invoke-Lumos](assets/Invoke-Lumos-Windows.gif)
+
+__macOS:__
+![Invoke-Lumos](assets/Invoke-Lumos-macOS.gif)
 
 This module is published in the PowerShell Gallery, so can be installed via:
 
