@@ -6,11 +6,11 @@ A PowerShell module for switching Windows 10 and MacOS Mojave between light and 
 
 __Windows:__
 
-![Invoke-Lumos](assets/Invoke-Lumos-Windows.gif)
+![Invoke-Lumos](assets/Invoke-Lumos-Windows.gif | width=600)
 
 __macOS:__
 
-![Invoke-Lumos](assets/Invoke-Lumos-macOS.gif)
+![Invoke-Lumos](assets/Invoke-Lumos-macOS.gif | width=600)
 
 This module is published in the PowerShell Gallery, so can be installed via:
 
