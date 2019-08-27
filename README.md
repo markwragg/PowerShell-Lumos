@@ -6,7 +6,7 @@ A PowerShell module for switching Windows 10 and MacOS Mojave between light and 
 
 __Windows:__
 
-![Invoke-Lumos](assets/Invoke-Lumos-Windows.gif)
+<img src="https://github.com/markwragg/PowerShell-Lumos/raw/master/assets/Invoke-Lumos-Windows.gif" data-canonical-src="https://gyazo.com/eb5c5741b6a9a16c692170a41a49c858.png" width="600" />
 
 __macOS:__
 
