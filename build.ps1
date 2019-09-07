@@ -10,7 +10,8 @@ $RequiredModules = 'Psake','PSScriptAnalyzer','Pester','BuildHelpers'
 ForEach ($RequiredModule in $RequiredModules) {
 
     if (-not (Get-Module $RequiredModule -ListAvailable)) {
-        Install-Module $RequiredModule -Scope CurrentUser
+        Write-Host "Installing $RequiredModule.."
+        Install-Module $RequiredModule -Scope CurrentUser -Force
     }
 }
 
