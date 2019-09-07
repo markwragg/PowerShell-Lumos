@@ -61,3 +61,7 @@ Task Build -Depends Test {
 
     "`n"
 }
+
+Task Deploy -Depends Build {
+    Write-Host 'In deployment task.'
+}
