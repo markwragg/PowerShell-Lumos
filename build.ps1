@@ -26,14 +26,15 @@ $RequiredModules = @(
 
 ForEach ($RequiredModule in $RequiredModules) {
 
-    $CheckModule = Get-Module $RequiredModule -ListAvailable | Sort Version -Desc | Select -First 1
+    $CheckModule = Get-Module $RequiredModule.Name -ListAvailable | Sort Version -Desc | Select -First 1
+    $CheckModule
 
     if ($CheckModule.Version -lt $RequiredModule.Version) {
         Write-Host "Installing $($RequiredModule.Name) version $($RequiredModule.Version).."
         Install-Module $RequiredModule.Name -MinimumVersion $RequiredModule.Version -Scope CurrentUser -Force
     }
 
-    Import-Module -Name $RequiredModule -MinimumVersion $RequiredModule.Version
+    Import-Module -Name $RequiredModule.Name -MinimumVersion $RequiredModule.Version
 }
 
 # Execute PSake
