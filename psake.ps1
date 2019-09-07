@@ -37,16 +37,10 @@ Task Test -Depends Init  {
     $CodeFiles = (Get-ChildItem $ENV:BHModulePath -Recurse -Include "*.psm1","*.ps1").FullName
     $Script:TestResults = Invoke-Pester -Path $ProjectRoot\Tests -CodeCoverage $CodeFiles -PassThru -OutputFormat NUnitXml -OutputFile "$ProjectRoot\$TestFile" -ExcludeTag Integration
 
-    # In Appveyor?  Upload our tests! #Abstract this into a function?
-    If($ENV:BHBuildSystem -eq 'AppVeyor')
-    {
-        (New-Object 'System.Net.WebClient').UploadFile(
-            "https://ci.appveyor.com/api/testresults/nunit/$($env:APPVEYOR_JOB_ID)",
-            "$ProjectRoot\$TestFile" )
+    if ($env:System.HostType -ne 'build') {
+        Remove-Item "$ProjectRoot\$TestFile" -Force -ErrorAction SilentlyContinue
     }
-
-    Remove-Item "$ProjectRoot\$TestFile" -Force -ErrorAction SilentlyContinue
-
+    
     # Failed tests?
     # Need to tell psake or it will proceed to the deployment. Danger!
     if($Script:TestResults.FailedCount -gt 0)
@@ -66,31 +60,4 @@ Task Build -Depends Test {
     Set-ShieldsIoBadge -Subject 'Coverage' -Status $CoveragePercent -AsPercentage
 
     "`n"
-}
-
-Task Deploy -Depends Build {
-    '----------------------------------------------------------------------'
-    # Update Manifest version number
-    $ManifestPath = $Env:BHPSModuleManifest
-    
-    if (-Not $env:APPVEYOR_BUILD_VERSION) {
-        $Manifest = Test-ModuleManifest -Path $manifestPath
-        [System.Version]$Version = $Manifest.Version
-        [String]$NewVersion = New-Object -TypeName System.Version -ArgumentList ($Version.Major, $Version.Minor, $Version.Build, ($Version.Revision+1))
-    } 
-    else {
-        $NewVersion = $env:APPVEYOR_BUILD_VERSION
-    }
-    "New Version: $NewVersion"
-
-    $FunctionList = @((Get-ChildItem -File -Recurse -Path .\$Env:BHProjectName\Public).BaseName)
-
-    Update-ModuleManifest -Path $ManifestPath -ModuleVersion $NewVersion -FunctionsToExport $functionList
-    
-    $Params = @{
-        Path = $ProjectRoot
-        Force = $true
-        Recurse = $false # We keep psdeploy artifacts, avoid deploying those : )
-    }
-    Invoke-PSDeploy @Verbose @Params
 }
