@@ -22,7 +22,7 @@ $RequiredModules = @(
         Name = 'BuildHelpers'
         Version = [version]'2.0.10'
     }
-}
+)
 
 ForEach ($RequiredModule in $RequiredModules) {
 
