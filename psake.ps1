@@ -59,8 +59,7 @@ Task Build -Depends Test {
 
     "`n`tSTATUS: Running Set-ShieldsIoBadge to update Readme.md with $CoveragePercent% code coverage badge"
 
-    Set-ShieldsIoBadge -Subject 'Coverage' -Status $CoveragePercent -AsPercentage
-
+    Set-ShieldsIoBadge -Path (Join-Path $PSScriptRoot 'Readme.md') -Subject 'Coverage' -Status $CoveragePercent -AsPercentage
     "`n"
 }
 

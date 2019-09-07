@@ -7,7 +7,7 @@
 
 $RequiredModules = @(
     @{
-        Name = 'Psake'
+        Name = 'PSake'
         Version =  [version]'4.8.0'
     },
     @{
@@ -36,6 +36,10 @@ ForEach ($RequiredModule in $RequiredModules) {
 
     Import-Module -Name $RequiredModule.Name -MinimumVersion $RequiredModule.Version
 }
+
+# Initiate BuildHelpers
+
+Set-BuildEnvironment
 
 # Execute PSake
 
