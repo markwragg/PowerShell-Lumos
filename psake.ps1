@@ -27,8 +27,8 @@ Task Init {
 
 Task Test -Depends Init  {
     '----------------------------------------------------------------------'
-    Import-Module Pester -MinimumVersion 4 -Force
-    
+    Import-Module Pester -MinimumVersion 4.8.1 -Force
+
     $Timestamp = Get-date -uformat "%Y%m%d-%H%M%S"
     $PSVersion = $PSVersionTable.PSVersion.Major
     $TestFile = "TestResults_PS$PSVersion`_$TimeStamp.xml"
