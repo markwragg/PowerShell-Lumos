@@ -1,6 +1,7 @@
 @{
     ExcludeRules = @(
-        "PSAvoidGlobalVars"
+        "PSAvoidGlobalVars",
+        "PSUseSingularNouns"
     )
 
     Severity = @(
