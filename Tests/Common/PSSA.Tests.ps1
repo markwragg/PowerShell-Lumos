@@ -1,6 +1,6 @@
 # This runs all PSScriptAnalyzer rules as Pester tests to enable visibility when publishing test results
 # Vars
-$ScriptAnalyzerSettingsPath = Join-Path -Path $env:BHProjectPath -ChildPath 'Build\PSScriptAnalyzerSettings.psd1'
+$ScriptAnalyzerSettingsPath = Join-Path -Path $env:BHProjectPath -ChildPath 'PSScriptAnalyzerSettings.psd1'
 
 Describe 'Testing against PSSA rules' {
     Context 'PSSA Standard Rules' {

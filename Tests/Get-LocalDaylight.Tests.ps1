@@ -4,7 +4,11 @@ $PSVersion = $PSVersionTable.PSVersion.Major
 $Root = "$PSScriptRoot\..\"
 $Module = 'Lumos'
 
-If (-not (Get-Module $Module)) { Import-Module "$Root\$Module" -Force }
+If (Get-Module $Module) {
+    Remove-Module $Module -Force
+}
+    
+Import-Module "$Root\$Module" -Force
 
 Describe "Get-LocalDaylight PS$PSVersion" {
     
