@@ -1,7 +1,33 @@
 Function Register-LumosScheduledTask {
     <#
         .SYNOPSIS
-            Registers a Scheduled Task to run Lumos automatically.
+            Registers a Scheduled Task to run Lumos automatically on Windows.
+
+         .DESCRIPTION
+            Use this cmdlet to register a schedueld task on Windows so that Invoke-Lumos is executed using
+            your specified parameters at sunrise and sunset or when the task is next available to run having
+            missed one of those scheduled times.
+
+        .PARAMETER ExcludeSystem
+            Exclude changing the System theme when switching to Dark/Light (Windows only) when the task runs.
+
+        .PARAMETER IncludeOfficeProPlus
+            Include changing the theme of Microsoft Office to Dark/Light (Windows only) when the task runs.
+
+        .PARAMETER ExcludeApps
+            Exclude changing the Applications (where supported) theme when switching to Dark/Light (Windows only) when the task runs.
+
+        .PARAMETER DarkWallpaper
+            Specify a path to use to modify the Desktop Wallpaper to when the task runs and switches to the Dark theme.
+
+        .PARAMETER LightWallpaper
+            Specify a path to use to modify the Desktop Wallpaper to when the task runs and switches to the Light theme.
+
+        .EXAMPLE
+            Register-LumosScheduledTask -ExcludeApps -DarkWallpaper C:\Temp\dark.png -LightWallpaper C:\Temp\light.png
+
+            Creates a scheduled task that will run at the current local sunrise/sunset times and switch just the OS theme
+            to either dark or light, along with the specified light or dark wallpaper.
     #>
     [cmdletbinding()]
     Param(
