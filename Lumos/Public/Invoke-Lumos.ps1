@@ -1,7 +1,55 @@
 Function Invoke-Lumos {
     <#
         .SYNOPSIS
-            Sets the Windows Theme to light or dark mode dependent on time of day.
+            Sets the Windows or Mac Theme to light or dark mode dependent on time of day.
+
+        .DESCRIPTION
+            Use this cmdlet to change the theme on Windows 10 or MacOS Mojave to the light of dark themes,
+            either as specified by parameters or (for Windows only), automatically based on the local time
+            of day and whether it is before or after sunrise/sunset.
+        
+        .PARAMETER Dark
+            Switch to the Dark OS theme.
+
+        .PARAMETER Light
+            Switch to the Light OS theme.
+
+        .PARAMETER ExcludeSystem
+            Exclude changing the System theme when switching to Dark/Light (Windows only).
+
+        .PARAMETER IncludeOfficeProPlus
+            Include changing the theme of Microsoft Office to Dark/Light (Windows only).
+
+        .PARAMETER ExcludeApps
+            Exclude changing the Applications (where supported) theme when switching to Dark/Light (Windows only).
+
+        .PARAMETER DarkWallpaper
+            Specify a path to use to modify the Desktop Wallpaper to when switching to the Dark theme.
+
+        .PARAMETER LightWallpaper
+            Specify a path to use to modify the Desktop Wallpaper to when switching to the Light theme.
+
+        .EXAMPLE
+            Invoke-Lumos -Dark -DarkWallpaper ./dark-wallpaper.png
+
+            Switches the OS theme to the Dark theme and specified Wallpaper.
+
+        .EXAMPLE
+            Invoke-Lumos -Light -LightWallpaper ./light-wallpaper.png
+
+            Swithches the OS theme to the Light theme and specified Wallpaper.
+
+        .EXAMPLE
+            Invoke-Lumos -Dark -ExcludeApps
+
+            Switches the OS theme to Dark, but (on Windows only) does not change the theme of apps that support
+            Dark/Light theme.
+
+        .Example
+            Invoke-Lumos
+
+            On Windows: Switches to either Dark or Light theme dependent on your current location/time of day.
+            On MacOS: Switches current theme from either Light to Dark or Dark to Light.
     #>
     [cmdletbinding(DefaultParameterSetName = 'Dark')]
     Param(
