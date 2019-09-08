@@ -10,7 +10,7 @@ Properties {
     $lines = '----------------------------------------------------------------------'
 
     # Pester
-    $TestScripts = Get-ChildItem "$ProjectRoot\Tests\*\*Tests.ps1"
+    $TestScripts = Get-ChildItem "$ProjectRoot\Tests\*.Tests.ps1"
     $TestFile = "Test-Unit_$($TimeStamp).xml"
 
     # Script Analyzer
