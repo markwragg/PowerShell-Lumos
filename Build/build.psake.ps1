@@ -83,8 +83,8 @@ Task 'CombineFunctionsAndStage' -Depends 'Clean' {
     # Copy other required folders and files
     $pathsToCopy = @(
         Join-Path -Path $ProjectRoot -ChildPath 'Documentation'
-        Join-Path -Path $ProjectRoot -ChildPath 'Examples'
-        # Join-Path -Path $ProjectRoot -ChildPath 'CHANGELOG.md'
+        # Join-Path -Path $ProjectRoot -ChildPath 'Examples'
+        Join-Path -Path $ProjectRoot -ChildPath 'CHANGELOG.md'
         Join-Path -Path $ProjectRoot -ChildPath 'README.md'
     )
     Copy-Item -Path $pathsToCopy -Destination $StagingFolder -Recurse
