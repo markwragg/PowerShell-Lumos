@@ -76,7 +76,9 @@ steps:
       git --version
       git config --global user.email "build@azuredevops.com"
       git config --global user.name "AzureDevOps"
-      git checkout $env:Build.SourceBranch
-      git add *.md
+      git checkout $env:BUILD_SOURCEBRANCH
+      git add README.md
+      git add CHANGELOG.md
       git commit -m "[skip ci] AppVeyor Build %APPVEYOR_BUILD_VERSION%"
       git push
+    displayName: "Commit Modified Markdown"

@@ -145,13 +145,19 @@ Task 'Test' -Depends 'ImportStagingModule' {
     $lines
 
     # Gather test results. Store them in a variable and file
+    $CodeFiles = (Get-ChildItem $ENV:BHModulePath -Recurse -Include '*.ps1').FullName
     $TestFilePath = Join-Path -Path $ArtifactFolder -ChildPath $TestFile
-    $TestResults = Invoke-Pester -Script $TestScripts -PassThru -OutputFormat 'NUnitXml' -OutputFile $TestFilePath -PesterOption @{IncludeVSCodeMarker = $true }
+    $TestResults = Invoke-Pester -Script $TestScripts -PassThru -CodeCoverage $CodeFiles -OutputFormat 'NUnitXml' -OutputFile $TestFilePath -PesterOption @{IncludeVSCodeMarker = $true }
 
     # Fail build if any tests fail
     if ($TestResults.FailedCount -gt 0) {
         Write-Error "Failed '$($TestResults.FailedCount)' tests, build failed"
     }
+
+    #Update readme.md with Code Coverage result
+    $CoveragePercent = [math]::floor(100 - (($TestResults.CodeCoverage.NumberOfCommandsMissed / $TestResults.CodeCoverage.NumberOfCommandsAnalyzed) * 100))
+
+    Set-ShieldsIoBadge -Path (Join-Path $ProjectRoot 'README.md') -Subject 'Coverage' -Status $CoveragePercent -AsPercentage
 }
 
 
