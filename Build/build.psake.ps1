@@ -270,5 +270,26 @@ Task 'Deploy' -Depends 'Init' {
     else {
         Write-Host "$ProjectRoot/CHANGELOG.md not found. Skipping deployment."
     }
+}
+
+Task 'CommitMarkdown' -Depends 'Init' {
+    $lines
+
+    git --version
+    git config --global user.email "build@azuredevops.com"
+    git config --global user.name "AzureDevOps"
+    git checkout $env:BUILD_SOURCEBRANCHNAME
+    git add README.md
+    git add CHANGELOG.md
+
+    $GitStatus = git status
     
+    if ($GitStatus -notmatch 'nothing to commit') {
+        git commit -m "[skip ci] AzureDevOps Build $($env:BUILD_BUILDID)"
+        git push
+    }
+    else {
+        write-host $GitStatus
+    }
+
 }

@@ -48,6 +48,9 @@ steps:
       .\Build\build.ps1 -TaskList 'CreateBuildArtifact'
     displayName: "Create Build Artifact"
 
+  - powershell: |
+      .\Build\build.ps1 -TaskList 'CommitMarkdown'
+    displayName: "Commit Modified Markdown"
 
   # Publish Tasks
   - task: PublishTestResults@2
@@ -71,14 +74,3 @@ steps:
       PathtoPublish: Staging
       ArtifactName: PSModule
     condition: always()
-
-  - powershell: |
-      git --version
-      git config --global user.email "build@azuredevops.com"
-      git config --global user.name "AzureDevOps"
-      git checkout $env:BUILD_SOURCEBRANCH
-      git add README.md
-      git add CHANGELOG.md
-      git commit -m "[skip ci] AppVeyor Build %APPVEYOR_BUILD_VERSION%"
-      git push
-    displayName: "Commit Modified Markdown"
