@@ -1,3 +1,6 @@
+variables:
+- group: powershell-gallery
+
 # Build Pipeline
 pool:
   # What environment will the build agent run on? (Windows / Linux / macOS)
@@ -29,6 +32,10 @@ steps:
   - powershell: |
       .\Build\build.ps1 -TaskList 'Test'
     displayName: "Test"
+
+  - powershell: |
+      .\Build\build.ps1 -TaskList 'Deploy'
+    displayName: "Deploy"
 
   - powershell: |
       .\Build\build.ps1 -TaskList 'UpdateDocumentation'

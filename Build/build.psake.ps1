@@ -146,7 +146,7 @@ Task 'Test' -Depends 'ImportStagingModule' {
 
     # Gather test results. Store them in a variable and file
     $TestFilePath = Join-Path -Path $ArtifactFolder -ChildPath $TestFile
-    $TestResults = Invoke-Pester -Script $TestScripts -PassThru -OutputFormat 'NUnitXml' -OutputFile $TestFilePath -PesterOption @{IncludeVSCodeMarker = $true}
+    $TestResults = Invoke-Pester -Script $TestScripts -PassThru -OutputFormat 'NUnitXml' -OutputFile $TestFilePath -PesterOption @{IncludeVSCodeMarker = $true }
 
     # Fail build if any tests fail
     if ($TestResults.FailedCount -gt 0) {
@@ -194,7 +194,8 @@ Task 'CreateBuildArtifact' -Depends 'Init' {
         $manifest = Test-ModuleManifest -Path $StagingModuleManifestPath -ErrorAction 'Stop'
         [Version]$manifestVersion = $manifest.Version
 
-    } catch {
+    }
+    catch {
         throw "Could not get manifest version from [$StagingModuleManifestPath]"
     }
 
@@ -204,7 +205,8 @@ Task 'CreateBuildArtifact' -Depends 'Init' {
         $releasePath = Join-Path -Path $ArtifactFolder -ChildPath $releaseFilename
         Write-Host "Creating release artifact [$releasePath] using manifest version [$manifestVersion]" -ForegroundColor 'Yellow'
         Compress-Archive -Path "$StagingFolder/*" -DestinationPath $releasePath -Force -Verbose -ErrorAction 'Stop'
-    } catch {
+    }
+    catch {
         throw "Could not create release artifact [$releasePath] using manifest version [$manifestVersion]"
     }
 
@@ -212,9 +214,15 @@ Task 'CreateBuildArtifact' -Depends 'Init' {
 }
 
 
-#region NOT USED FOR THIS DEMO
 # Task 'Release' -Depends 'Clean', 'Test', 'UpdateDocumentation', 'CombineFunctionsAndStage', 'CreateBuildArtifact' #'UpdateManifest', 'UpdateTag'
 Task 'Build' -Depends 'Init' {
+    $lines
+
+    
+}
+
+
+Task 'Deploy' -Depends 'Init' {
     $lines
 
     # Load the module, read the exported functions, update the psd1 FunctionsToExport
@@ -224,20 +232,37 @@ Task 'Build' -Depends 'Init' {
     try {
         $Version = Get-NextPSGalleryVersion -Name $env:BHProjectName -ErrorAction 'Stop'
         Update-Metadata -Path $env:BHPSModuleManifest -PropertyName 'ModuleVersion' -Value $Version -ErrorAction 'Stop'
-    } catch {
-        "Failed to update version for '$env:BHProjectName': $_.`nContinuing with existing version"
     }
-}
-
-
-Task 'Deploy' -Depends 'Init' {
-    $lines
-
-    $Params = @{
-        Path    = "$ProjectRoot"
-        Force   = $true
-        Recurse = $false
+    catch {
+        throw "Failed to update version for '$env:BHProjectName': $_.`n"
     }
-    Invoke-PSDeploy @Verbose @Params
+
+    if (Get-Item "$ProjectRoot/CHANGELOG.md") {
+        
+        $ChangeLog = Get-Content "$ProjectRoot/CHANGELOG.md"
+
+        if ($ChangeLog -match '## !Deploy') {
+
+            $Params = @{
+                Path    = "$ProjectRoot"
+                Force   = $true
+                Recurse = $false
+            }
+
+            Invoke-PSDeploy @Verbose @Params
+
+            $DeployDate = (Get-Date -Format 'yyyy-MM-dd')
+
+            $ChangeLog -replace '## !Deploy', "[$Version] - $DeployDate"
+
+            Set-Content -Path "$ProjectRoot/CHANGELOG.md" -Value $ChangeLog
+        }
+        else {
+            Write-Host 'CHANGELOG.md did not contain ## !Deploy. Skipping deployment.'
+        }
+    }
+    else {
+        Write-Host "$ProjectRoot/CHANGELOG.md not found. Skipping deployment."
+    }
+    
 }
-#endregion NOT USED FOR THIS DEMO
