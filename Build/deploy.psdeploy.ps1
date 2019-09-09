@@ -1,15 +1,22 @@
 # Config file for PSDeploy
 # Set-BuildEnvironment from BuildHelpers module has populated ENV:BHModulePath and related variables
 # Publish to gallery with a few restrictions
+if ($StagingModulePath) {
+    $ModuleSourcePath = $StagingModulePath
+}
+else {
+    $ModuleSourcePath = $env:BHPSModulePath
+}
+
 if (
-    $env:BHPSModulePath -and
+    $ModuleSourcePath -and
     $env:BHBuildSystem -ne 'Unknown' -and
     $env:BHBranchName -eq "master" -and
     $ENV:NugetApiKey
 ) {
     Deploy Module {
         By PSGalleryModule {
-            FromSource $ENV:BHPSModulePath
+            FromSource $ModuleSourcePath
             To PSGallery
             WithOptions @{
                 ApiKey = $ENV:NugetApiKey
@@ -28,7 +35,7 @@ if (
 if ($env:BHPSModulePath -and $env:BHBuildSystem -eq 'AppVeyor') {
     Deploy DeveloperBuild {
         By AppVeyorModule {
-            FromSource $ENV:BHPSModulePath
+            FromSource $ModuleSourcePath
             To AppVeyor
             WithOptions @{
                 Version = $env:APPVEYOR_BUILD_VERSION
