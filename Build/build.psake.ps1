@@ -1,8 +1,9 @@
 # PSake makes variables declared here available in other scriptblocks
 Properties {
     $ProjectRoot = $ENV:BHProjectPath
+
     if (-not $ProjectRoot) {
-        $ProjectRoot = $PSScriptRoot
+        $ProjectRoot = "$PSScriptRoot/.."
     }
 
     $Timestamp = Get-Date -UFormat '%Y%m%d-%H%M%S'
@@ -27,7 +28,7 @@ Properties {
     $StagingModuleManifestPath = Join-Path -Path $StagingModulePath -ChildPath "$($env:BHProjectName).psd1"
 
     # Documentation
-    $DocumentationPath = Join-Path -Path $StagingFolder -ChildPath 'Documentation'
+    $DocumentationPath = Join-Path -Path $ProjectRoot -ChildPath 'Documentation'
 }
 
 
@@ -219,15 +220,6 @@ Task 'CreateBuildArtifact' -Depends 'Init' {
     Write-Output "`nFINISHED: Release artifact creation."
 }
 
-
-# Task 'Release' -Depends 'Clean', 'Test', 'UpdateDocumentation', 'CombineFunctionsAndStage', 'CreateBuildArtifact' #'UpdateManifest', 'UpdateTag'
-Task 'Build' -Depends 'Init' {
-    $lines
-
-    
-}
-
-
 Task 'Deploy' -Depends 'Init' {
     $lines
 
@@ -247,20 +239,18 @@ Task 'Deploy' -Depends 'Init' {
         
         $ChangeLog = Get-Content "$ProjectRoot/CHANGELOG.md"
 
-        if ($ChangeLog -match '## !Deploy') {
+        if ($ChangeLog -contains '## !Deploy') {
 
             $Params = @{
-                Path    = "$ProjectRoot"
+                Path    = "$StagingFolder"
                 Force   = $true
                 Recurse = $false
             }
 
             Invoke-PSDeploy @Verbose @Params
 
-            $DeployDate = (Get-Date -Format 'yyyy-MM-dd')
-
-            $ChangeLog -replace '## !Deploy', "[$Version] - $DeployDate"
-
+            # Update ChangeLog with deployment version and date
+            $ChangeLog = $ChangeLog -replace '## !Deploy', "## [$Version] - $(Get-Date -Format 'yyyy-MM-dd')"
             Set-Content -Path "$ProjectRoot/CHANGELOG.md" -Value $ChangeLog
         }
         else {
@@ -272,15 +262,19 @@ Task 'Deploy' -Depends 'Init' {
     }
 }
 
-Task 'CommitMarkdown' -Depends 'Init' {
+Task 'Commit' -Depends 'Init' {
     $lines
+
+    Set-Location $ProjectRoot
 
     git --version
     git config --global user.email "build@azuredevops.com"
     git config --global user.name "AzureDevOps"
     git checkout $env:BUILD_SOURCEBRANCHNAME
-    git add *.md
-    git add *.psd1
+    git add /Documentation/*.md
+    git add README.md
+    git add CHANGELOG.md
+    git add $env:BHPSModuleManifest
     git commit -m "[skip ci] AzureDevOps Build $($env:BUILD_BUILDID)"
     git push
 }
