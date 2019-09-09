@@ -1,6 +1,6 @@
 # PowerShell-Lumos
 
-[![status](https://ci.appveyor.com/api/projects/status/awhysa8j9ftgh3an?svg=true)](https://ci.appveyor.com/project/markwragg/powershell-lumos) ![coverage](https://img.shields.io/badge/coverage-32%25-red.svg)
+[![Build Status](https://dev.azure.com/markwragg/GitHub/_apis/build/status/markwragg.PowerShell-Lumos?branchName=master)](https://dev.azure.com/markwragg/GitHub/_build/latest?definitionId=1&branchName=master) ![coverage](https://img.shields.io/badge/coverage-32%25-red.svg)
 
 A PowerShell module for switching Windows 10 and MacOS Mojave between light and dark themes depending on whether it is day or night.
 
