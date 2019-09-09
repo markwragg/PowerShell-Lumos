@@ -1,6 +1,6 @@
 # Change Log
 
-## !Deploy
+## [1.0.32] - 2019-09-09
 
 * Testing new deployment pipeline.
 
