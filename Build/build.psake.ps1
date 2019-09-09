@@ -238,7 +238,7 @@ Task 'Deploy' -Depends 'Init' {
         if ($ChangeLog -contains '## !Deploy') {
 
             $Params = @{
-                Path    = "$StagingFolder"
+                Path    = "$ProjectRoot/Build/deploy.psdeploy.ps1"
                 Force   = $true
                 Recurse = $false
             }
