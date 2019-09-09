@@ -37,20 +37,20 @@ steps:
     displayName: "Test"
 
   - powershell: |
-      .\Build\build.ps1 -TaskList 'Deploy'
-    displayName: "Deploy"
-
-  - powershell: |
       .\Build\build.ps1 -TaskList 'UpdateDocumentation'
     displayName: "Update Documentation"
 
   - powershell: |
-      .\Build\build.ps1 -TaskList 'CreateBuildArtifact'
-    displayName: "Create Build Artifact"
+      .\Build\build.ps1 -TaskList 'Deploy'
+    displayName: "Deploy"
 
   - powershell: |
-      .\Build\build.ps1 -TaskList 'CommitMarkdown'
-    displayName: "Commit Modified Markdown"
+      .\Build\build.ps1 -TaskList 'Commit'
+    displayName: "Commit Changes"
+
+  - powershell: |
+      .\Build\build.ps1 -TaskList 'CreateBuildArtifact'
+    displayName: "Create Build Artifact"
 
   # Publish Tasks
   - task: PublishTestResults@2
