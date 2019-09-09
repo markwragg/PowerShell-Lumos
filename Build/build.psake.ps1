@@ -158,7 +158,7 @@ Task 'Test' -Depends 'ImportStagingModule' {
     #Update readme.md with Code Coverage result
     $CoveragePercent = [math]::floor(100 - (($TestResults.CodeCoverage.NumberOfCommandsMissed / $TestResults.CodeCoverage.NumberOfCommandsAnalyzed) * 100))
 
-    Set-ShieldsIoBadge -Path (Join-Path $ProjectRoot 'README.md') -Subject 'Test Coverage' -Status $CoveragePercent -AsPercentage
+    Set-ShieldsIoBadge -Path (Join-Path $ProjectRoot 'README.md') -Subject 'coverage' -Status $CoveragePercent -AsPercentage
 }
 
 
@@ -181,10 +181,6 @@ Task 'UpdateDocumentation' -Depends 'ImportStagingModule' {
         NoMetadata   = $true
     }
     New-MarkdownHelp @platyPSParams -ErrorAction 'SilentlyContinue' -Verbose | Out-Null
-
-    # Update index.md
-    Write-Output "Copying index.md...`n"
-    Copy-Item -Path "$env:BHProjectPath\README.md" -Destination "$($DocumentationPath)\index.md" -Force -Verbose | Out-Null
 }
 
 
@@ -275,7 +271,6 @@ Task 'Commit' -Depends 'Init' {
     git add Documentation/*.md
     git add README.md
     git add CHANGELOG.md
-    git add $Module/$Module.psd1
     git commit -m "[skip ci] AzureDevOps Build $($env:BUILD_BUILDID)"
     git push
 }
