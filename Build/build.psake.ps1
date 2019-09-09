@@ -41,6 +41,7 @@ Task 'Init' {
     $lines
 
     Set-Location $ProjectRoot
+    
     "Build System Details:"
     Get-Item ENV:BH*
     "`n"
@@ -167,11 +168,12 @@ Task 'UpdateDocumentation' -Depends 'ImportStagingModule' {
     $lines
     Write-Output "Updating Markdown help in Staging folder: [$DocumentationPath]`n"
 
-    # $null = Import-Module -Name $env:BHPSModuleManifest -Global -Force -PassThru -Verbose
+    If (Test-Path $DocumentationPath) {
+        Remove-Item -Path $DocumentationPath -Recurse -Force -ErrorAction 'SilentlyContinue'
+        Start-Sleep -Seconds 5
+    }
 
     # Cleanup
-    Remove-Item -Path $DocumentationPath -Recurse -Force -ErrorAction 'SilentlyContinue'
-    Start-Sleep -Seconds 5
     New-Item -Path $DocumentationPath -ItemType 'Directory' | Out-Null
 
     # Create new Documentation markdown files
