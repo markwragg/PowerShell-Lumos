@@ -279,9 +279,8 @@ Task 'CommitMarkdown' -Depends 'Init' {
     git config --global user.email "build@azuredevops.com"
     git config --global user.name "AzureDevOps"
     git checkout $env:BUILD_SOURCEBRANCHNAME
-    git add "$ProjectRoot/README.md"
-    git add "$ProjectRoot/CHANGELOG.md"
-    git add "$ProjectRoot/Documentation/*.md"
+    git add *.md
+    git add *.psd1
     git commit -m "[skip ci] AzureDevOps Build $($env:BUILD_BUILDID)"
     git push
 }
