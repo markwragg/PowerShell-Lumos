@@ -11,9 +11,9 @@ Register-LumosScheduledTask [-ExcludeSystem] [-ExcludeApps] [-IncludeOfficeProPl
 ```
 
 ## DESCRIPTION
-Use this cmdlet to register a schedueld task on Windows so that Invoke-Lumos is executed using
-your specified parameters at sunrise and sunset or when the task is next available to run having
-missed one of those scheduled times.
+Use this cmdlet to register a scheduled task on Windows so that Invoke-Lumos is executed using
+your specified parameters at sunrise and sunset, or when the task is next available to run having
+missed one of those scheduled times (e.g after system resumes).
 
 ## EXAMPLES
 
