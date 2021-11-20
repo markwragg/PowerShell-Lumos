@@ -176,7 +176,7 @@ Function Invoke-Lumos {
             $proPlusThemeValue = if ($Lumos -eq 0) { 
                 4 
             } else { 
-                if ("HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\O365ProPlusRetail*") {
+                if (Test-Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\O365ProPlusRetail*") {
                     5
                 } else {
                     0
