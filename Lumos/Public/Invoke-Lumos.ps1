@@ -173,8 +173,16 @@ Function Invoke-Lumos {
         }
 
         if ($IncludeOfficeProPlus) {
-            $proPlusThemeValue = if ($Lumos -eq 0) { 4 } else { 0 }
-
+            $proPlusThemeValue = if ($Lumos -eq 0) { 
+                4 
+            } else { 
+                if (Test-Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\O365ProPlusRetail*") {
+                    5
+                } else {
+                    0
+                }
+            }
+            
             Write-Verbose "Setting OfficeProPlus to $Status with value: $proPlusThemeValue .."
 
             Set-ItemProperty -Path $OfficeThemeRegKey -Name 'UI Theme' -Value $proPlusThemeValue -Type DWORD
@@ -187,6 +195,7 @@ Function Invoke-Lumos {
 
                     Set-ItemProperty -Path $identityPath -Name 'Data' -Value ([byte[]]($proPlusThemeValue, 0, 0, 0)) -Type Binary
                 }
+                Break
             }
         }
 
