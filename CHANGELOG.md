@@ -1,5 +1,9 @@
 # Change Log
 
+## !Deploy
+
+* Added `Lumos` as an alias of `Invoke-Lumos` because its nice to just be able to type `Lumos` at the console and change the theme to night/day when required.
+
 ## [1.0.32] - 2019-09-09
 
 * Testing new deployment pipeline.
