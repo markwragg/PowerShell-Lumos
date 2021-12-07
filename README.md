@@ -32,6 +32,8 @@ If the sun is up, the theme will be set to light.
 
 On MacOS Mojave, using `Invoke-Lumos` with no switches will switch the theme to its alternate, i.e if it's Light it will switch to Dark and if Dark switch to Light.
 
+You can also simply use the alias `Lumos`.
+
 You can explicitly specify whether you want the Dark or Light modes on both Windows 10 and MacOS Mojave with the following switches:
 
 ```PowerShell
