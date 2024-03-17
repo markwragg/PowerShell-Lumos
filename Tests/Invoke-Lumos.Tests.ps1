@@ -153,7 +153,7 @@ Describe "Invoke-Lumos PS$PSVersion" {
         }
 
         Context 'Invoke-Lumos with Get-UserLocation returning null' {
-            
+
             Mock Get-UserLocation {}
 
             It 'Should throw "Could not get sunrise/sunset data for the current user."' {

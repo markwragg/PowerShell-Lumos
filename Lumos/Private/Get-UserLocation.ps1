@@ -8,7 +8,7 @@ Function Get-UserLocation {
 
             Result
             -----------
-            Latitude           : 123.281781267745  
+            Latitude           : 123.281781267745
             Longitude          : 456.05927473888778
             Altitude           : 0
             HorizontalAccuracy : 82
@@ -16,11 +16,11 @@ Function Get-UserLocation {
             Speed              : NaN
             Course             : NaN
             IsUnknown          : False
-    #>      
+    #>
     [cmdletbinding()]
     Param()
 
-    Add-Type -AssemblyName System.Device 
+    Add-Type -AssemblyName System.Device
 
     $GeoWatcher = New-Object System.Device.Location.GeoCoordinateWatcher
     $GeoWatcher.Start()

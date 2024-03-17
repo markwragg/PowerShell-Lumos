@@ -7,12 +7,26 @@ $Module = 'Lumos'
 If (Get-Module $Module) {
     Remove-Module $Module -Force
 }
-    
+
 Import-Module "$Root\$Module" -Force
 
 Describe "Get-UserLocation PS$PSVersion" {
-    
+
     InModuleScope Lumos {
-        # Pending -- Cannot run the cmdlet directly in CI without causing it to hang.
+
+        Mock Add-Type {
+            New-MockObject -Type System.Device
+        }
+
+        Mock New-Object {
+            New-MockObject -Type System.Device.Location.GeoCoordinateWatcher -Methods @{ Start = {} } -Properties @{ Status = 'Ready'; Permission = 'Denied' }
+        }
+
+        Mock Start-Sleep {}
+
+        It 'Should not invoke Start-Sleep' {
+            Get-UserLocation
+            Assert-MockCalled Start-Sleep -Times 0
+        }
     }
 }
