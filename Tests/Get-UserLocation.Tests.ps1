@@ -14,12 +14,10 @@ Describe "Get-UserLocation PS$PSVersion" {
 
     InModuleScope Lumos {
 
-        Mock Add-Type {
-            New-MockObject -Type System.Device
-        }
+        Mock Add-Type {}
 
         Mock New-Object {
-            New-MockObject -Type System.Device.Location.GeoCoordinateWatcher -Methods @{ Start = {} } -Properties @{ Status = 'Ready'; Permission = 'Denied' }
+            New-MockObject -Type 'System.Device.Location.GeoCoordinateWatcher' -Methods @{ Start = {} } -Properties @{ Status = 'Ready'; Permission = 'Denied' }
         }
 
         Mock Start-Sleep {}

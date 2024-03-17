@@ -26,7 +26,7 @@ Function Get-UserLocation {
     $GeoWatcher.Start()
 
     while (($GeoWatcher.Status -ne 'Ready') -and ($GeoWatcher.Permission -ne 'Denied')) {
-        Start-Sleep -Milliseconds 100 
+        Start-Sleep -Milliseconds 100
     }  
 
     if ($GeoWatcher.Permission -eq 'Denied') {
