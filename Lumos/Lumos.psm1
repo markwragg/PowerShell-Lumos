@@ -11,3 +11,5 @@ $Private = @( Get-ChildItem -Path "$PSScriptRoot\Private\*.ps1" -Recurse )
 }
 
 Set-Alias -Name 'lumos' -Value 'Invoke-Lumos'
+
+Export-ModuleMember -Function $Public.BaseName -Alias 'lumos'
