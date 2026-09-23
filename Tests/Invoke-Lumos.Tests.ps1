@@ -4,172 +4,385 @@ $PSVersion = $PSVersionTable.PSVersion.Major
 $Root = "$PSScriptRoot\..\"
 $Module = 'Lumos'
 
-If (Get-Module $Module) {
-    Remove-Module $Module -Force
+if (Get-Module -Name $Module) {
+    Remove-Module -Name $Module -Force
 }
-    
 Import-Module "$Root\$Module" -Force
 
 Describe "Invoke-Lumos PS$PSVersion" {
 
     InModuleScope Lumos {
 
-        Mock Get-UserLocation {
-            [pscustomobject]@{
-                Latitude = '123.456'
-                Longitude = '-24.567'
+        BeforeAll {
+
+            Mock Get-UserLocation {
+                [pscustomobject]@{
+                    Latitude  = '123.456'
+                    Longitude = '-24.567'
+                }
             }
+
+            Mock Set-ItemProperty {}
+
+            Mock Set-Wallpaper {}
+
+            Mock Invoke-AppleScript {}
+
+            Mock Write-Error {}
         }
 
-        Mock Set-ItemProperty {}
-
-        Mock Set-Wallpaper {}
-        
         Context 'Invoke-Lumos -Light' {
 
-            $InvokeLumos = Invoke-Lumos -Light
+            BeforeEach {
+                $InvokeLumos = Invoke-Lumos -Light
+            }
 
             It 'Should return null' {
                 $InvokeLumos | Should -Be $null
             }
 
             It 'Should call Get-Userlocation 0 times' {
-                Assert-MockCalled Get-UserLocation -Times 0 -Exactly
+                Should -Invoke Get-UserLocation -Times 0 -Exactly
             }
 
             It 'Should call Set-ItemProperty 2 times' {
-                Assert-MockCalled Set-ItemProperty -Times 2 -Exactly
+                Should -Invoke Set-ItemProperty -Times 2 -Exactly
             }
 
             It 'Should call Set-Wallpaper 0 times' {
-                Assert-MockCalled Set-Wallpaper -Times 0 -Exactly
+                Should -Invoke Set-Wallpaper -Times 0 -Exactly
             }
         }
 
         Context 'Invoke-Lumos -Dark' {
 
-            $InvokeLumos = Invoke-Lumos -Dark
+            BeforeEach {
+                $InvokeLumos = Invoke-Lumos -Dark
+            }
 
             It 'Should return null' {
                 $InvokeLumos | Should -Be $null
             }
 
             It 'Should call Get-Userlocation 1 time' {
-                Assert-MockCalled Get-UserLocation -Times 0 -Exactly
+                Should -Invoke Get-UserLocation -Times 0 -Exactly
             }
 
             It 'Should call Set-ItemProperty 2 times' {
-                Assert-MockCalled Set-ItemProperty -Times 2 -Exactly
+                Should -Invoke Set-ItemProperty -Times 2 -Exactly
             }
 
             It 'Should call Set-Wallpaper 0 times' {
-                Assert-MockCalled Set-Wallpaper -Times 0 -Exactly
+                Should -Invoke Set-Wallpaper -Times 0 -Exactly
             }
         }
 
         Context 'Invoke-Lumos -Light -ExcludeApps' {
 
-            $InvokeLumos = Invoke-Lumos -Light -ExcludeApps
+            BeforeEach {
+                $InvokeLumos = Invoke-Lumos -Light -ExcludeApps
+            }
 
             It 'Should return null' {
                 $InvokeLumos | Should -Be $null
             }
 
             It 'Should call Get-Userlocation 0 times' {
-                Assert-MockCalled Get-UserLocation -Times 0 -Exactly
+                Should -Invoke Get-UserLocation -Times 0 -Exactly
             }
 
             It 'Should call Set-ItemProperty 1 time' {
-                Assert-MockCalled Set-ItemProperty -Times 1 -Exactly
+                Should -Invoke Set-ItemProperty -Times 1 -Exactly
             }
 
             It 'Should call Set-Wallpaper 0 times' {
-                Assert-MockCalled Set-Wallpaper -Times 0 -Exactly
+                Should -Invoke Set-Wallpaper -Times 0 -Exactly
             }
         }
 
         Context 'Invoke-Lumos -Dark -DarkWallpaper c:\some\wallpaper.png' {
 
-            $InvokeLumos = Invoke-Lumos -Dark -DarkWallpaper 'c:\some\wallpaper.png'
+            BeforeEach {
+                $InvokeLumos = Invoke-Lumos -Dark -DarkWallpaper 'c:\some\wallpaper.png'
+            }
 
             It 'Should return null' {
                 $InvokeLumos | Should -Be $null
             }
 
             It 'Should call Get-Userlocation 0 times' {
-                Assert-MockCalled Get-UserLocation -Times 0 -Exactly
+                Should -Invoke Get-UserLocation -Times 0 -Exactly
             }
 
             It 'Should call Set-ItemProperty 2 times' {
-                Assert-MockCalled Set-ItemProperty -Times 2 -Exactly
+                Should -Invoke Set-ItemProperty -Times 2 -Exactly
             }
 
             It 'Should call Set-Wallpaper 1 times' {
-                Assert-MockCalled Set-Wallpaper -Times 1 -Exactly
+                Should -Invoke Set-Wallpaper -Times 1 -Exactly
             }
         }
 
         Context 'Invoke-Lumos -Light -LightWallpaper c:\some\wallpaper.png' {
 
-            $InvokeLumos = Invoke-Lumos -Light -LightWallpaper 'c:\some\wallpaper.png'
+            BeforeEach {
+                $InvokeLumos = Invoke-Lumos -Light -LightWallpaper 'c:\some\wallpaper.png'
+            }
 
             It 'Should return null' {
                 $InvokeLumos | Should -Be $null
             }
 
             It 'Should call Get-Userlocation 0 times' {
-                Assert-MockCalled Get-UserLocation -Times 0 -Exactly
+                Should -Invoke Get-UserLocation -Times 0 -Exactly
             }
 
             It 'Should call Set-ItemProperty 2 times' {
-                Assert-MockCalled Set-ItemProperty -Times 2 -Exactly
+                Should -Invoke Set-ItemProperty -Times 2 -Exactly
             }
 
             It 'Should call Set-Wallpaper 1 times' {
-                Assert-MockCalled Set-Wallpaper -Times 1 -Exactly
+                Should -Invoke Set-Wallpaper -Times 1 -Exactly
             }
         }
 
 
         Context 'Invoke-Lumos' {
 
-            $InvokeLumos = Invoke-Lumos
+            BeforeEach {
+                $InvokeLumos = Invoke-Lumos
+            }
 
             It 'Should return null' {
                 $InvokeLumos | Should -Be $null
             }
 
             It 'Should call Get-Userlocation 1 time' {
-                Assert-MockCalled Get-UserLocation -Times 1 -Exactly
+                Should -Invoke Get-UserLocation -Times 1 -Exactly
             }
 
             It 'Should call Set-ItemProperty 2 times' {
-                Assert-MockCalled Set-ItemProperty -Times 2 -Exactly
+                Should -Invoke Set-ItemProperty -Times 2 -Exactly
             }
 
             It 'Should call Set-Wallpaper 0 times' {
-                Assert-MockCalled Set-Wallpaper -Times 0 -Exactly
+                Should -Invoke Set-Wallpaper -Times 0 -Exactly
             }
         }
 
         Context 'Invoke-Lumos with Get-UserLocation returning null' {
 
-            Mock Get-UserLocation {}
+            BeforeAll {
+                Mock Get-UserLocation {}
+            }
 
-            It 'Should throw "Could not get sunrise/sunset data for the current user."' {
+            It 'Should throw "Could not get sunrise/sunset data for the current user and call Get-UserLocation 1 time"' {
                 { Invoke-Lumos } | Should -Throw 'Could not get sunrise/sunset data for the current user.'
+
+                Should -Invoke Get-UserLocation -Times 1 -Exactly
+            }
+        }
+
+        Context 'Invoke-Lumos -Dark -ExcludeSystem' {
+
+            BeforeEach {
+                $InvokeLumos = Invoke-Lumos -Dark -ExcludeSystem
             }
 
-            It 'Should call Get-Userlocation 1 time' {
-                Assert-MockCalled Get-UserLocation -Times 1 -Exactly
+            It 'Should return null' {
+                $InvokeLumos | Should -Be $null
             }
 
-            It 'Should call Set-ItemProperty 0 times' {
-                Assert-MockCalled Set-ItemProperty -Times 0 -Exactly
+            It 'Should only set the Apps theme, not the System theme' {
+                Should -Invoke Set-ItemProperty -Times 1 -Exactly -ParameterFilter {
+                    $Name -eq 'AppsUseLightTheme'
+                }
+                Should -Invoke Set-ItemProperty -Times 0 -Exactly -ParameterFilter {
+                    $Name -eq 'SystemUsesLightTheme'
+                }
+            }
+        }
+
+        Context 'Invoke-Lumos -Dark -IncludeOfficeProPlus' {
+
+            BeforeEach {
+                $InvokeLumos = Invoke-Lumos -Dark -IncludeOfficeProPlus
             }
 
-            It 'Should call Set-Wallpaper 0 times' {
-                Assert-MockCalled Set-Wallpaper -Times 0 -Exactly
+            It 'Should return null' {
+                $InvokeLumos | Should -Be $null
+            }
+
+            It 'Should set the Office theme to the dark value' {
+                Should -Invoke Set-ItemProperty -Times 1 -Exactly -ParameterFilter {
+                    $Name -eq 'UI Theme' -and $Value -eq 4
+                }
+            }
+        }
+
+        Context 'Invoke-Lumos -Light -IncludeOfficeProPlus with O365ProPlus installed' {
+
+            BeforeEach {
+                Mock Test-Path { $true } -ParameterFilter {
+                    $Path -like '*O365ProPlusRetail*'
+                }
+
+                $InvokeLumos = Invoke-Lumos -Light -IncludeOfficeProPlus
+            }
+
+            It 'Should set the Office theme to the O365ProPlus light value' {
+                Should -Invoke Set-ItemProperty -Times 1 -Exactly -ParameterFilter {
+                    $Name -eq 'UI Theme' -and $Value -eq 5
+                }
+            }
+        }
+
+        Context 'Invoke-Lumos -Light -IncludeOfficeProPlus without O365ProPlus installed' {
+
+            BeforeEach {
+                Mock Test-Path { $false } -ParameterFilter {
+                    $Path -like '*O365ProPlusRetail*'
+                }
+
+                $InvokeLumos = Invoke-Lumos -Light -IncludeOfficeProPlus
+            }
+
+            It 'Should set the Office theme to the default light value' {
+                Should -Invoke Set-ItemProperty -Times 1 -Exactly -ParameterFilter {
+                    $Name -eq 'UI Theme' -and $Value -eq 0
+                }
+            }
+        }
+
+        Context 'Invoke-Lumos -Dark on MacOS' {
+
+            BeforeEach {
+                Set-Variable -Name 'IsMacOS' -Value $true -Force -Scope Global
+
+                $InvokeLumos = Invoke-Lumos -Dark
+            }
+
+            AfterEach {
+                Set-Variable -Name 'IsMacOS' -Value $false -Force -Scope Global
+            }
+
+            It 'Should return null' {
+                $InvokeLumos | Should -Be $null
+            }
+
+            It 'Should not look up the user location' {
+                Should -Invoke Get-UserLocation -Times 0 -Exactly
+            }
+
+            It 'Should switch to dark mode via AppleScript' {
+                Should -Invoke Invoke-AppleScript -Times 1 -Exactly -ParameterFilter {
+                    $Command -eq 'tell application \"System Events\" to tell appearance preferences to set dark mode to true'
+                }
+            }
+
+            It 'Should not touch the Windows registry' {
+                Should -Invoke Set-ItemProperty -Times 0 -Exactly
+            }
+        }
+
+        Context 'Invoke-Lumos -Light on MacOS' {
+
+            BeforeEach {
+                Set-Variable -Name 'IsMacOS' -Value $true -Force -Scope Global
+
+                $InvokeLumos = Invoke-Lumos -Light
+            }
+
+            AfterEach {
+                Set-Variable -Name 'IsMacOS' -Value $false -Force -Scope Global
+            }
+
+            It 'Should switch to light mode via AppleScript' {
+                Should -Invoke Invoke-AppleScript -Times 1 -Exactly -ParameterFilter {
+                    $Command -eq 'tell application \"System Events\" to tell appearance preferences to set dark mode to false'
+                }
+            }
+        }
+
+        Context 'Invoke-Lumos on MacOS with no -Dark or -Light switch' {
+
+            BeforeEach {
+                Set-Variable -Name 'IsMacOS' -Value $true -Force -Scope Global
+
+                $InvokeLumos = Invoke-Lumos
+            }
+
+            AfterEach {
+                Set-Variable -Name 'IsMacOS' -Value $false -Force -Scope Global
+            }
+
+            It 'Should not look up the user location' {
+                Should -Invoke Get-UserLocation -Times 0 -Exactly
+            }
+
+            It 'Should toggle whichever mode is not currently active' {
+                Should -Invoke Invoke-AppleScript -Times 1 -Exactly -ParameterFilter {
+                    $Command -eq 'tell application \"System Events\" to tell appearance preferences to set dark mode to not dark mode'
+                }
+            }
+        }
+
+        Context 'Invoke-Lumos -Dark -DarkWallpaper on MacOS' {
+
+            BeforeEach {
+                Set-Variable -Name 'IsMacOS' -Value $true -Force -Scope Global
+
+                $InvokeLumos = Invoke-Lumos -Dark -DarkWallpaper 'c:\some\wallpaper.png'
+            }
+
+            AfterEach {
+                Set-Variable -Name 'IsMacOS' -Value $false -Force -Scope Global
+            }
+
+            It 'Should call AppleScript twice: once for the theme, once for the wallpaper' {
+                Should -Invoke Invoke-AppleScript -Times 2 -Exactly
+            }
+
+            It 'Should set the wallpaper via AppleScript' {
+                Should -Invoke Invoke-AppleScript -Times 1 -Exactly -ParameterFilter {
+                    $Command -eq 'tell application \"System Events\" to tell current desktop to set picture to \"c:\some\wallpaper.png\"'
+                }
+            }
+
+            It 'Should not call the Windows-only Set-Wallpaper function' {
+                Should -Invoke Set-Wallpaper -Times 0 -Exactly
+            }
+        }
+
+        Context 'Invoke-Lumos -Dark -ExcludeSystem -ExcludeApps -IncludeOfficeProPlus on MacOS' {
+
+            BeforeEach {
+                Set-Variable -Name 'IsMacOS' -Value $true -Force -Scope Global
+
+                $InvokeLumos = Invoke-Lumos -Dark -ExcludeSystem -ExcludeApps -IncludeOfficeProPlus
+            }
+
+            AfterEach {
+                Set-Variable -Name 'IsMacOS' -Value $false -Force -Scope Global
+            }
+
+            It 'Should warn that each Windows-only switch is unsupported on MacOS' {
+                Should -Invoke Write-Error -Times 3 -Exactly
+            }
+        }
+
+        Context 'Invoke-Lumos on Linux' {
+
+            BeforeEach {
+                Set-Variable -Name 'IsLinux' -Value $true -Force -Scope Global
+            }
+
+            AfterEach {
+                Set-Variable -Name 'IsLinux' -Value $false -Force -Scope Global
+            }
+
+            It 'Should throw as Linux is not supported' {
+                { Invoke-Lumos -Dark } | Should -Throw 'Linux is not currently supported by this module.'
             }
         }
     }

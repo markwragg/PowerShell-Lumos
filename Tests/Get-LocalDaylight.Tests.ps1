@@ -4,34 +4,36 @@ $PSVersion = $PSVersionTable.PSVersion.Major
 $Root = "$PSScriptRoot\..\"
 $Module = 'Lumos'
 
-If (Get-Module $Module) {
-    Remove-Module $Module -Force
+if (Get-Module -Name $Module) {
+    Remove-Module -Name $Module -Force
 }
-    
 Import-Module "$Root\$Module" -Force
 
 Describe "Get-LocalDaylight PS$PSVersion" {
-    
+
     InModuleScope Lumos {
 
-        Mock Invoke-RestMethod {
-            [pscustomobject]@{
-                results = @{
-                    sunrise    = '5:52:27 AM'
-                    sunset     = '6:01:34 PM'
-                    solar_noon = '11:57:00 AM'
-                    day_length = '12:09:07'
+        BeforeEach {
+
+            Mock Invoke-RestMethod {
+                [pscustomobject]@{
+                    results = @{
+                        sunrise    = '5:52:27 AM'
+                        sunset     = '6:01:34 PM'
+                        solar_noon = '11:57:00 AM'
+                        day_length = '12:09:07'
+                    }
                 }
             }
+
+            $GetDate = Get-Command Get-Date
+
+            Mock Get-Date {
+                & $GetDate -Date $Date
+            }
+
+            $GetLocalDaylight = Get-LocalDaylight -Latitude 1 -Longitude 2
         }
-
-        $GetDate = Get-Command Get-Date
-
-        Mock Get-Date {
-            & $GetDate -Date $Date
-        }
-
-        $GetLocalDaylight = Get-LocalDaylight -Latitude 1 -Longitude 2
 
         It 'Should return a PSCustomObject' {
             $GetLocalDaylight | Should -BeOfType [PSCustomObject]
@@ -48,11 +50,11 @@ Describe "Get-LocalDaylight PS$PSVersion" {
         }
 
         It 'Should call Invoke-ResetMethod 1 time' {
-            Assert-MockCalled 'Invoke-RestMethod' -Times 1 -Exactly
+            Should -Invoke 'Invoke-RestMethod' -Times 1 -Exactly
         }
 
         It 'Should call Get-Date 2 times' {
-            Assert-MockCalled 'Get-Date' -Times 2 -Exactly
+            Should -Invoke 'Get-Date' -Times 2 -Exactly
         }
     }
 }

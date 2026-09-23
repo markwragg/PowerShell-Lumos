@@ -1,5 +1,5 @@
 ﻿$Public = @( Get-ChildItem -Path "$PSScriptRoot\Public\*.ps1" -Recurse )
-$Private = @( Get-ChildItem -Path "$PSScriptRoot\Private\*.ps1" -Recurse )
+$Private = @( Get-ChildItem -Path "$PSScriptRoot\Private\*.ps1" -Recurse -ErrorAction 'SilentlyContinue' )
 
 @($Public + $Private) | ForEach-Object {
     Try {
@@ -10,6 +10,4 @@ $Private = @( Get-ChildItem -Path "$PSScriptRoot\Private\*.ps1" -Recurse )
     }
 }
 
-Set-Alias -Name 'lumos' -Value 'Invoke-Lumos'
-
-Export-ModuleMember -Function $Public.BaseName -Alias 'lumos'
+Export-ModuleMember -Function $Public.BaseName

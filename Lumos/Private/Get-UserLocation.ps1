@@ -1,38 +1,32 @@
 Function Get-UserLocation {
     <#
         .SYNOPSIS
-            Returns the location information for the local user.
+            Returns the approximate location of the local user, based on their public IP address.
+
+        .DESCRIPTION
+            Looks up the city-level location of the current public IP address via the ipinfo.io API. This is used
+            instead of the Windows Location Service because that requires location permission to be granted
+            interactively and is typically unavailable when this module is run from a Scheduled Task.
 
         .EXAMPLE
             Get-UserLocation
 
             Result
             -----------
-            Latitude           : 123.281781267745
-            Longitude          : 456.05927473888778
-            Altitude           : 0
-            HorizontalAccuracy : 82
-            VerticalAccuracy   : NaN
-            Speed              : NaN
-            Course             : NaN
-            IsUnknown          : False
+            Latitude  : 51.5074
+            Longitude : -0.1278
     #>
     [cmdletbinding()]
     Param()
 
-    Add-Type -AssemblyName System.Device
+    $IPInfo = Invoke-RestMethod -Uri 'https://ipinfo.io/json'
 
-    $GeoWatcher = New-Object System.Device.Location.GeoCoordinateWatcher
-    $GeoWatcher.Start()
+    if ($IPInfo.loc) {
+        $Latitude, $Longitude = $IPInfo.loc -split ','
 
-    while (($GeoWatcher.Status -ne 'Ready') -and ($GeoWatcher.Permission -ne 'Denied')) {
-        Start-Sleep -Milliseconds 100
-    }  
-
-    if ($GeoWatcher.Permission -eq 'Denied') {
-        Throw 'Access was denied to user location information'
-    }
-    else {
-        $GeoWatcher.Position.Location
+        [pscustomobject]@{
+            Latitude  = [double]$Latitude
+            Longitude = [double]$Longitude
+        }
     }
 }
