@@ -7,7 +7,7 @@ Function Invoke-Lumos {
             Use this cmdlet to change the theme on Windows 10 or MacOS Mojave to the light of dark themes,
             either as specified by parameters or (for Windows only), automatically based on the local time
             of day and whether it is before or after sunrise/sunset.
-        
+
         .PARAMETER Dark
             Switch to the Dark OS theme.
 
@@ -136,7 +136,7 @@ Function Invoke-Lumos {
         }
 
         Invoke-AppleScript -Command $MacCommand
-        
+
         if ($ExcludeSystem) {
             Write-Error '-ExcludeSystem is not currently supported on MacOS.'
         }
@@ -173,29 +173,33 @@ Function Invoke-Lumos {
         }
 
         if ($IncludeOfficeProPlus) {
-            $proPlusThemeValue = if ($Lumos -eq 0) { 
-                4 
-            } else { 
+            $proPlusThemeValue = if ($Lumos -eq 0) {
+                4
+            } else {
                 if (Test-Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\O365ProPlusRetail*") {
                     5
                 } else {
                     0
                 }
             }
-            
+
             Write-Verbose "Setting OfficeProPlus to $Status with value: $proPlusThemeValue .."
 
             Set-ItemProperty -Path $OfficeThemeRegKey -Name 'UI Theme' -Value $proPlusThemeValue -Type DWORD
 
-            Get-ChildItem -Path ($OfficeThemeRegKey + "\Roaming\Identities\") | ForEach-Object {
-                $identityPath = ($_.Name.Replace('HKEY_CURRENT_USER', 'HKCU:') + "\Settings\1186\{00000000-0000-0000-0000-000000000000}");
+            $IdentitiesRegKey = $OfficeThemeRegKey + "\Roaming\Identities\"
 
-                if (Get-ItemProperty -Path $identityPath -Name 'Data' -ErrorAction Ignore) {
-                    Write-Verbose 'Active identity path for ProPlus installation: ' $identityPath
+            if (Test-Path $IdentitiesRegKey) {
+                Get-ChildItem -Path $IdentitiesRegKey | ForEach-Object {
+                    $identityPath = ($_.Name.Replace('HKEY_CURRENT_USER', 'HKCU:') + "\Settings\1186\{00000000-0000-0000-0000-000000000000}");
 
-                    Set-ItemProperty -Path $identityPath -Name 'Data' -Value ([byte[]]($proPlusThemeValue, 0, 0, 0)) -Type Binary
+                    if (Get-ItemProperty -Path $identityPath -Name 'Data' -ErrorAction Ignore) {
+                        Write-Verbose 'Active identity path for ProPlus installation: ' $identityPath
+
+                        Set-ItemProperty -Path $identityPath -Name 'Data' -Value ([byte[]]($proPlusThemeValue, 0, 0, 0)) -Type Binary
+                    }
+                    Break
                 }
-                Break
             }
         }
 

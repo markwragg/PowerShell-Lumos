@@ -276,6 +276,10 @@ Describe "Invoke-Lumos PS$PSVersion" {
         Context 'Invoke-Lumos -Light -IncludeOfficeProPlus with O365ProPlus installed' {
 
             BeforeEach {
+                # Default for every other Test-Path call (e.g. the Office Identities registry key), so it behaves
+                # as if no Office identity is signed in, same as a machine with no Office installed.
+                Mock Test-Path { $false }
+
                 Mock Test-Path { $true } -ParameterFilter {
                     $Path -like '*O365ProPlusRetail*'
                 }
@@ -293,9 +297,8 @@ Describe "Invoke-Lumos PS$PSVersion" {
         Context 'Invoke-Lumos -Light -IncludeOfficeProPlus without O365ProPlus installed' {
 
             BeforeEach {
-                Mock Test-Path { $false } -ParameterFilter {
-                    $Path -like '*O365ProPlusRetail*'
-                }
+                # Default for every Test-Path call, including the Office Identities registry key check.
+                Mock Test-Path { $false }
 
                 $InvokeLumos = Invoke-Lumos -Light -IncludeOfficeProPlus
             }

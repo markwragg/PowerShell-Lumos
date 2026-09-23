@@ -4,6 +4,7 @@
 
 * [BugFix] `Get-UserLocation` now determines location via IP-address geolocation instead of the Windows Location Service, which routinely denies permission when Lumos is run from a Scheduled Task - causing sunrise/sunset auto-detection to fail silently.
 * [BugFix] `Invoke-Lumos` now restarts Explorer after changing the System theme, fixing the Windows 11 taskbar (including on secondary monitors) not updating to match the new Dark/Light mode.
+* [BugFix] `Invoke-Lumos -IncludeOfficeProPlus` no longer throws when Office isn't installed or has no signed-in identity, since it looked up the Office identities registry key without checking it exists first.
 
 ## [1.0.33] - 2021-12-07
 
