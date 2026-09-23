@@ -67,8 +67,6 @@ Invoke-Lumos -Dark -IncludeOfficeProPlus
 
 If you'd like Windows 10 to automatically switch from Light to Dark mode based on your local sunrise/sunset times, you can use the following cmdlet to add a Scheduled Task to do so (this cmdlet does not currently support MacOS Mojave):
 
-> Note this may require your PowerShell terminal to be running as Administrator.
-
 ```PowerShell
 Register-LumosScheduledTask
 ```
@@ -79,4 +77,4 @@ Note you can specify all the above switches when doing this to customize the res
 Register-LumosScheduledTask -ExcludeApps -DarkWallpaper c:\wallpaper\dark.png -LightWallpaper c:\wallpaper\light.png
 ```
 
-Note that each time the scheduled task runs it will invoke the `Update-LumosScheduledTask` cmdlet to change the timings of the triggers to reflect the latest sunrise/sunset times for your locale.
+This creates a task that runs every 15 minutes, so `Invoke-Lumos` can re-check the current sunrise/sunset for your locale and switch the theme when needed. The task runs as your own (non-administrator) user account.

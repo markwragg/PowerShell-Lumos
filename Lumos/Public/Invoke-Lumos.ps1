@@ -164,12 +164,27 @@ Function Invoke-Lumos {
         $OfficeThemeRegKey = 'HKCU:\Software\Microsoft\Office\16.0\Common'
 
         if (-not $ExcludeSystem) {
-            Write-Verbose "Setting System to $Status Theme.."
-            Set-ItemProperty -Path $ThemeRegKey -Name 'SystemUsesLightTheme' -Value $Lumos
+            $CurrentSystemTheme = (Get-ItemProperty -Path $ThemeRegKey -Name 'SystemUsesLightTheme' -ErrorAction SilentlyContinue).SystemUsesLightTheme
+
+            if ($CurrentSystemTheme -ne $Lumos) {
+                Write-Verbose "Setting System to $Status Theme.."
+                Set-ItemProperty -Path $ThemeRegKey -Name 'SystemUsesLightTheme' -Value $Lumos
+
+                # The taskbar (and Start, Action Center) follow SystemUsesLightTheme, not AppsUseLightTheme, and
+                # Explorer's taskbar - including on secondary monitors - only repaints correctly after being
+                # restarted. Only doing this when the theme actually changed avoids restarting Explorer on every
+                # run of a frequently scheduled task (e.g. Register-LumosScheduledTask's 15 minute trigger).
+                Write-Verbose 'Restarting Explorer to apply the theme change to the taskbar..'
+                Stop-Process -ProcessName explorer
+            }
         }
         if (-not $ExcludeApps) {
-            Write-Verbose "Setting Apps to $Status Theme.."
-            Set-ItemProperty -Path $ThemeRegKey -Name 'AppsUseLightTheme' -Value $Lumos
+            $CurrentAppsTheme = (Get-ItemProperty -Path $ThemeRegKey -Name 'AppsUseLightTheme' -ErrorAction SilentlyContinue).AppsUseLightTheme
+
+            if ($CurrentAppsTheme -ne $Lumos) {
+                Write-Verbose "Setting Apps to $Status Theme.."
+                Set-ItemProperty -Path $ThemeRegKey -Name 'AppsUseLightTheme' -Value $Lumos
+            }
         }
 
         if ($IncludeOfficeProPlus) {
@@ -201,13 +216,6 @@ Function Invoke-Lumos {
                     Break
                 }
             }
-        }
-
-        if (-not $ExcludeSystem) {
-            # The taskbar (and Start, Action Center) follow SystemUsesLightTheme, not AppsUseLightTheme, and
-            # Explorer's taskbar - including on secondary monitors - only repaints correctly after being restarted.
-            Write-Verbose 'Restarting Explorer to apply the theme change to the taskbar..'
-            Stop-Process -ProcessName explorer
         }
 
         if ($Wallpaper) {

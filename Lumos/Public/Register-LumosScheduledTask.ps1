@@ -5,8 +5,18 @@ Function Register-LumosScheduledTask {
 
          .DESCRIPTION
             Use this cmdlet to register a scheduled task on Windows so that Invoke-Lumos is executed using
-            your specified parameters at sunrise and sunset, or when the task is next available to run having
-            missed one of those scheduled times (e.g after system resumes).
+            your specified parameters repeatedly every 15 minutes. Invoke-Lumos looks up the current
+            sunrise/sunset for your location on every run and only changes anything when the theme needs to
+            change, so this keeps the Dark/Light switch closely aligned with sunrise and sunset without the
+            scheduled task itself ever needing its trigger times updated.
+
+            The task runs as the current user at standard (non-elevated) privilege - Lumos only ever changes
+            current-user settings, so no administrator rights are required. Its trigger is fixed at registration
+            time rather than being refreshed later, since repeatedly re-registering the task to update trigger
+            times proved unreliable in practice. The task deliberately has no "at logon" trigger, since some
+            endpoint security software blocks non-admin users from registering one (likely because it's a common
+            persistence technique) - the repeating trigger fires immediately on registration and again within 15
+            minutes of any logon, so this has little practical effect.
 
         .PARAMETER ExcludeSystem
             Exclude changing the System theme when switching to Dark/Light (Windows only) when the task runs.
@@ -26,8 +36,8 @@ Function Register-LumosScheduledTask {
         .EXAMPLE
             Register-LumosScheduledTask -ExcludeApps -DarkWallpaper C:\Temp\dark.png -LightWallpaper C:\Temp\light.png
 
-            Creates a scheduled task that will run at the current local sunrise/sunset times and switch just the OS theme
-            to either dark or light, along with the specified light or dark wallpaper.
+            Creates a scheduled task that runs every 15 minutes, switching just the OS theme to either dark or light
+            based on the current local sunrise/sunset, along with the specified light or dark wallpaper.
     #>
     [cmdletbinding()]
     Param(
@@ -46,6 +56,11 @@ Function Register-LumosScheduledTask {
         [string]
         $LightWallpaper
     )
+
+    if (-not ($PSVersionTable.PSEdition -eq 'Desktop' -or $IsWindows)) {
+        Write-Warning 'Register-LumosScheduledTask is only supported on Windows.'
+        return
+    }
 
     $ArgumentDefaults = '-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden'
 
@@ -67,18 +82,15 @@ Function Register-LumosScheduledTask {
         $LumosArgument = $LumosArgument + " -DarkWallpaper '$DarkWallpaper'"
     }
 
-    # Get localized value for local administrator group
-    $adminSid = [System.Security.Principal.WellKnownSidType]::BuiltinAdministratorsSid
-    $adminSecId = New-Object System.Security.Principal.SecurityIdentifier($adminSid, $null)
-    $localizedAdminGroup = $adminSecId.Translate([System.Security.Principal.NTAccount]).Value
-
     $LumosAction = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument $LumosArgument
-    $UpdateAction = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument "$ArgumentDefaults -Command Update-LumosScheduledTask"
-    $Principal = New-ScheduledTaskPrincipal -GroupId $localizedAdminGroup -RunLevel Highest
+    $Principal = New-ScheduledTaskPrincipal -UserId $env:USERNAME -LogonType Interactive
     $TaskSettings = New-ScheduledTaskSettingsSet -StartWhenAvailable
 
-    New-ScheduledTask -Action $LumosAction,$UpdateAction -Principal $Principal -Settings $TaskSettings | Register-ScheduledTask -TaskName 'Lumos' -Force
+    # Repeats indefinitely every 15 minutes so Invoke-Lumos re-checks sunrise/sunset regularly, without ever
+    # needing the task's own triggers to be updated later. Deliberately not an "at logon" trigger - some
+    # endpoint security software denies non-admin users permission to register one.
+    $IntervalTrigger = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 15)
 
-    # Run Update-LumosScheduledTask to add triggers
-    Update-LumosScheduledTask
+    New-ScheduledTask -Action $LumosAction -Principal $Principal -Settings $TaskSettings -Trigger $IntervalTrigger |
+        Register-ScheduledTask -TaskName 'Lumos' -Force | Out-Null
 }

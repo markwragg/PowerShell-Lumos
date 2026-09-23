@@ -24,6 +24,19 @@ Describe "Invoke-Lumos PS$PSVersion" {
 
             Mock Set-ItemProperty {}
 
+            # Default fallback for calls that don't match the more specific filter below (e.g. the Office
+            # identity 'Data' lookup), so real registry state on the machine running the tests can't leak in.
+            Mock Get-ItemProperty {}
+
+            # Returns a value that never matches the computed theme (0 or 1), so existing tests exercise the
+            # "theme needs to change" path by default. Tests for the "already applied" skip path override this.
+            Mock Get-ItemProperty {
+                [pscustomobject]@{
+                    SystemUsesLightTheme = 99
+                    AppsUseLightTheme    = 99
+                }
+            } -ParameterFilter { $Name -eq 'SystemUsesLightTheme' -or $Name -eq 'AppsUseLightTheme' }
+
             Mock Set-Wallpaper {}
 
             Mock Stop-Process {}
@@ -233,6 +246,56 @@ Describe "Invoke-Lumos PS$PSVersion" {
             }
 
             It 'Should not restart Explorer, since the taskbar follows the System theme, which was excluded' {
+                Should -Invoke Stop-Process -Times 0 -Exactly
+            }
+        }
+
+        Context 'Invoke-Lumos -Dark when the System and Apps theme are already Dark' {
+
+            BeforeEach {
+                Mock Get-ItemProperty {
+                    [pscustomobject]@{
+                        SystemUsesLightTheme = 0
+                        AppsUseLightTheme    = 0
+                    }
+                } -ParameterFilter { $Name -eq 'SystemUsesLightTheme' -or $Name -eq 'AppsUseLightTheme' }
+
+                $InvokeLumos = Invoke-Lumos -Dark
+            }
+
+            It 'Should return null' {
+                $InvokeLumos | Should -Be $null
+            }
+
+            It 'Should not set either theme value, since both already match' {
+                Should -Invoke Set-ItemProperty -Times 0 -Exactly
+            }
+
+            It 'Should not restart Explorer, since the System theme did not change' {
+                Should -Invoke Stop-Process -Times 0 -Exactly
+            }
+        }
+
+        Context 'Invoke-Lumos -Dark when only the System theme is already Dark' {
+
+            BeforeEach {
+                Mock Get-ItemProperty {
+                    [pscustomobject]@{
+                        SystemUsesLightTheme = 0
+                        AppsUseLightTheme    = 99
+                    }
+                } -ParameterFilter { $Name -eq 'SystemUsesLightTheme' -or $Name -eq 'AppsUseLightTheme' }
+
+                $InvokeLumos = Invoke-Lumos -Dark
+            }
+
+            It 'Should only set the Apps theme' {
+                Should -Invoke Set-ItemProperty -Times 1 -Exactly -ParameterFilter {
+                    $Name -eq 'AppsUseLightTheme'
+                }
+            }
+
+            It 'Should not restart Explorer, since the System theme did not change' {
                 Should -Invoke Stop-Process -Times 0 -Exactly
             }
         }

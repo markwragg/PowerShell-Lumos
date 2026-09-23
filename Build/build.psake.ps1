@@ -375,6 +375,18 @@ Task 'Deploy' -Depends 'Init' {
         $MinimumVersion = [Version]'1.1.0'
         if ($Version -lt $MinimumVersion) { $Version = $MinimumVersion }
 
+        # A [Breaking] entry in the unreleased ('!Deploy') CHANGELOG section marks this as a breaking release,
+        # so bump the major version instead of the usual patch bump Get-NextPSGalleryVersion applies.
+        $ChangeLogPath = "$ProjectRoot/CHANGELOG.md"
+        if (Test-Path $ChangeLogPath) {
+            $ChangeLogContent = Get-Content $ChangeLogPath -Raw
+
+            if ($ChangeLogContent -match '(?s)## !Deploy(.*?)(\n## |\z)' -and $Matches[1] -match '\[Breaking\]') {
+                $Version = [Version]::new($Version.Major + 1, 0, 0)
+                Write-Host "CHANGELOG contains a [Breaking] entry - bumping the major version to $Version instead" -ForegroundColor 'Yellow'
+            }
+        }
+
         Update-Metadata -Path $env:BHPSModuleManifest -PropertyName 'ModuleVersion' -Value $Version -ErrorAction 'Stop'
     }
     catch {

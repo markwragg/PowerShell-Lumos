@@ -20,10 +20,8 @@ Describe "Register-LumosScheduledTask PS$PSVersion" -Skip:(-not $IsWindowsPlatfo
 
             # New-ScheduledTask* cmdlets only build in-memory CIM objects, so they're left real rather than
             # mocked - the CimInstance-typed parameters they bind to reject plain PSCustomObject stand-ins.
-            # Register-ScheduledTask and Update-LumosScheduledTask are the calls with real side effects, so
-            # only those are mocked.
+            # Register-ScheduledTask is the call with a real side effect, so it's the only one mocked.
             Mock Register-ScheduledTask {}
-            Mock Update-LumosScheduledTask {}
         }
 
         Context 'Register-LumosScheduledTask' {
@@ -36,14 +34,25 @@ Describe "Register-LumosScheduledTask PS$PSVersion" -Skip:(-not $IsWindowsPlatfo
                 $RegisterLumosScheduledTask | Should -Be $null
             }
 
-            It 'Should register a scheduled task named Lumos with two actions' {
+            It 'Should register a scheduled task named Lumos with one action' {
                 Should -Invoke Register-ScheduledTask -Times 1 -Exactly -ParameterFilter {
-                    $TaskName -eq 'Lumos' -and $Force -and $InputObject.Actions.Count -eq 2
+                    $TaskName -eq 'Lumos' -and $Force -and $InputObject.Actions.Count -eq 1
                 }
             }
 
-            It 'Should call Update-LumosScheduledTask to set the triggers' {
-                Should -Invoke Update-LumosScheduledTask -Times 1 -Exactly
+            It 'Should register the task with a single repeating 15 minute trigger and no "at logon" trigger' {
+                Should -Invoke Register-ScheduledTask -Times 1 -Exactly -ParameterFilter {
+                    $InputObject.Triggers.Count -eq 1 -and
+                    $InputObject.Triggers[0].Repetition.Interval -eq 'PT15M' -and
+                    $InputObject.Triggers[0].CimClass.CimClassName -ne 'MSFT_TaskLogonTrigger'
+                }
+            }
+
+            It 'Should register the task to run as the current user without requiring elevation' {
+                Should -Invoke Register-ScheduledTask -Times 1 -Exactly -ParameterFilter {
+                    $InputObject.Principal.UserId -eq $env:USERNAME -and
+                    $InputObject.Principal.RunLevel -eq 'Limited'
+                }
             }
         }
 
@@ -80,6 +89,33 @@ Describe "Register-LumosScheduledTask PS$PSVersion" -Skip:(-not $IsWindowsPlatfo
                         Where-Object { $_.Arguments -like '*Invoke-Lumos*' }).Arguments
 
                     $LumosArgument -eq '-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -Command Invoke-Lumos'
+                }
+            }
+        }
+
+        Context 'Register-LumosScheduledTask on a non-Windows OS' -Skip:($PSVersionTable.PSEdition -eq 'Desktop') {
+
+            BeforeEach {
+                Set-Variable -Name 'IsWindows' -Value $false -Force -Scope Global
+
+                Mock Write-Warning {}
+
+                $RegisterLumosScheduledTask = Register-LumosScheduledTask
+            }
+
+            AfterEach {
+                Set-Variable -Name 'IsWindows' -Value $true -Force -Scope Global
+            }
+
+            It 'Should return null without registering a scheduled task' {
+                $RegisterLumosScheduledTask | Should -Be $null
+
+                Should -Invoke Register-ScheduledTask -Times 0 -Exactly
+            }
+
+            It 'Should warn that the cmdlet is Windows only' {
+                Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter {
+                    $Message -eq 'Register-LumosScheduledTask is only supported on Windows.'
                 }
             }
         }
