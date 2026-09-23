@@ -14,7 +14,7 @@ Function Update-LumosScheduledTask {
             Windows Only: Retrieves the current logged on users geolocation from the OS then retrieves the local sunrise
             and sunset times for the user via an API call. It then modifies the Scheduled Task named 'Lumos' with these triggers
             as well as adds a trigger to run it on logon.
-    #>      
+    #>
     [cmdletbinding(SupportsShouldProcess)]
     Param()
 

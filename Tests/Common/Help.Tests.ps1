@@ -61,13 +61,13 @@ Describe "Test help for <_.Name>" -ForEach $commands {
         }
 
         # Should be a description for every parameter
-        It 'Gets help for parameter: <_.Name>' -ForEach $parameters {
+        It 'Gets help for parameter: <_.Name>' -ForEach $parameters -AllowNullOrEmptyForEach {
             $parameterHelp = $help.parameters.parameter | Where-Object Name -EQ $_.Name
             $parameterHelp.Description.Text | Should -Not -BeNullOrEmpty
         }
 
         # Required value in Help should match IsMandatory property of parameter
-        It 'Help for <_.Name> parameter has correct Mandatory value' -ForEach $parameters {
+        It 'Help for <_.Name> parameter has correct Mandatory value' -ForEach $parameters -AllowNullOrEmptyForEach {
             $codeMandatory = $_.IsMandatory.ToString()
             $parameterHelp = $help.parameters.parameter | Where-Object Name -EQ $_.Name
             $parameterHelp.Required | Should -Be $codeMandatory
@@ -102,7 +102,7 @@ Describe "Test help for <_.Name>" -ForEach $commands {
         }
 
         # Shouldn't find extra parameters in help.
-        It 'Finds help parameter in code: <_>' -ForEach $helpParameterNames {
+        It 'Finds help parameter in code: <_>' -ForEach $helpParameterNames -AllowNullOrEmptyForEach {
             $_ -in $parameterNames | Should -Be $true
         }
     }

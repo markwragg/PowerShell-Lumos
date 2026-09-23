@@ -26,6 +26,8 @@ Describe "Invoke-Lumos PS$PSVersion" {
 
             Mock Set-Wallpaper {}
 
+            Mock Stop-Process {}
+
             Mock Invoke-AppleScript {}
 
             Mock Write-Error {}
@@ -52,6 +54,12 @@ Describe "Invoke-Lumos PS$PSVersion" {
             It 'Should call Set-Wallpaper 0 times' {
                 Should -Invoke Set-Wallpaper -Times 0 -Exactly
             }
+
+            It 'Should restart Explorer so the taskbar picks up the theme change' {
+                Should -Invoke Stop-Process -Times 1 -Exactly -ParameterFilter {
+                    $ProcessName -eq 'explorer'
+                }
+            }
         }
 
         Context 'Invoke-Lumos -Dark' {
@@ -74,6 +82,12 @@ Describe "Invoke-Lumos PS$PSVersion" {
 
             It 'Should call Set-Wallpaper 0 times' {
                 Should -Invoke Set-Wallpaper -Times 0 -Exactly
+            }
+
+            It 'Should restart Explorer so the taskbar picks up the theme change' {
+                Should -Invoke Stop-Process -Times 1 -Exactly -ParameterFilter {
+                    $ProcessName -eq 'explorer'
+                }
             }
         }
 
@@ -98,6 +112,10 @@ Describe "Invoke-Lumos PS$PSVersion" {
             It 'Should call Set-Wallpaper 0 times' {
                 Should -Invoke Set-Wallpaper -Times 0 -Exactly
             }
+
+            It 'Should still restart Explorer, since the System theme was still set' {
+                Should -Invoke Stop-Process -Times 1 -Exactly
+            }
         }
 
         Context 'Invoke-Lumos -Dark -DarkWallpaper c:\some\wallpaper.png' {
@@ -120,6 +138,10 @@ Describe "Invoke-Lumos PS$PSVersion" {
 
             It 'Should call Set-Wallpaper 1 times' {
                 Should -Invoke Set-Wallpaper -Times 1 -Exactly
+            }
+
+            It 'Should restart Explorer so the taskbar picks up the theme change' {
+                Should -Invoke Stop-Process -Times 1 -Exactly
             }
         }
 
@@ -144,6 +166,10 @@ Describe "Invoke-Lumos PS$PSVersion" {
             It 'Should call Set-Wallpaper 1 times' {
                 Should -Invoke Set-Wallpaper -Times 1 -Exactly
             }
+
+            It 'Should restart Explorer so the taskbar picks up the theme change' {
+                Should -Invoke Stop-Process -Times 1 -Exactly
+            }
         }
 
 
@@ -167,6 +193,10 @@ Describe "Invoke-Lumos PS$PSVersion" {
 
             It 'Should call Set-Wallpaper 0 times' {
                 Should -Invoke Set-Wallpaper -Times 0 -Exactly
+            }
+
+            It 'Should restart Explorer so the taskbar picks up the theme change' {
+                Should -Invoke Stop-Process -Times 1 -Exactly
             }
         }
 
@@ -200,6 +230,29 @@ Describe "Invoke-Lumos PS$PSVersion" {
                 Should -Invoke Set-ItemProperty -Times 0 -Exactly -ParameterFilter {
                     $Name -eq 'SystemUsesLightTheme'
                 }
+            }
+
+            It 'Should not restart Explorer, since the taskbar follows the System theme, which was excluded' {
+                Should -Invoke Stop-Process -Times 0 -Exactly
+            }
+        }
+
+        Context 'Invoke-Lumos -Dark -ExcludeSystem -ExcludeApps' {
+
+            BeforeEach {
+                $InvokeLumos = Invoke-Lumos -Dark -ExcludeSystem -ExcludeApps
+            }
+
+            It 'Should return null' {
+                $InvokeLumos | Should -Be $null
+            }
+
+            It 'Should not set either theme value' {
+                Should -Invoke Set-ItemProperty -Times 0 -Exactly
+            }
+
+            It 'Should not restart Explorer, since nothing changed' {
+                Should -Invoke Stop-Process -Times 0 -Exactly
             }
         }
 
@@ -282,6 +335,10 @@ Describe "Invoke-Lumos PS$PSVersion" {
 
             It 'Should not touch the Windows registry' {
                 Should -Invoke Set-ItemProperty -Times 0 -Exactly
+            }
+
+            It 'Should not restart Explorer, since MacOS has no such concept' {
+                Should -Invoke Stop-Process -Times 0 -Exactly
             }
         }
 

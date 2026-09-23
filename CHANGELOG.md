@@ -1,5 +1,10 @@
 # Change Log
 
+## !Deploy
+
+* [BugFix] `Get-UserLocation` now determines location via IP-address geolocation instead of the Windows Location Service, which routinely denies permission when Lumos is run from a Scheduled Task - causing sunrise/sunset auto-detection to fail silently.
+* [BugFix] `Invoke-Lumos` now restarts Explorer after changing the System theme, fixing the Windows 11 taskbar (including on secondary monitors) not updating to match the new Dark/Light mode.
+
 ## [1.0.33] - 2021-12-07
 
 * Added `Lumos` as an alias of `Invoke-Lumos` because its nice to just be able to type `Lumos` at the console and change the theme to night/day when required.

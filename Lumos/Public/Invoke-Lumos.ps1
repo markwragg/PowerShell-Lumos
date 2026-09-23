@@ -199,6 +199,13 @@ Function Invoke-Lumos {
             }
         }
 
+        if (-not $ExcludeSystem) {
+            # The taskbar (and Start, Action Center) follow SystemUsesLightTheme, not AppsUseLightTheme, and
+            # Explorer's taskbar - including on secondary monitors - only repaints correctly after being restarted.
+            Write-Verbose 'Restarting Explorer to apply the theme change to the taskbar..'
+            Stop-Process -ProcessName explorer
+        }
+
         if ($Wallpaper) {
             Set-Wallpaper $Wallpaper
         }
