@@ -15,6 +15,13 @@ Describe "Invoke-Lumos PS$PSVersion" {
 
         BeforeAll {
 
+            # Invoke-Lumos branches on the real $IsMacOS/$IsLinux automatic variables (there's no
+            # injectable platform parameter), so the values captured here are what AfterAll restores
+            # once this file is done - otherwise the per-context overrides below would leak into
+            # later test files sharing this same Pester process.
+            $Script:RealIsMacOS = $IsMacOS
+            $Script:RealIsLinux = $IsLinux
+
             Mock Get-UserLocation {
                 [pscustomobject]@{
                     Latitude  = '123.456'
@@ -44,6 +51,20 @@ Describe "Invoke-Lumos PS$PSVersion" {
             Mock Invoke-AppleScript {}
 
             Mock Write-Error {}
+        }
+
+        # Pins the simulated platform to Windows before every test in this file, so the "default"
+        # contexts below exercise the Windows branch regardless of which real OS the CI runner is -
+        # without this, they only passed by coincidence of running on a Windows agent. The "on MacOS"
+        # / "on Linux" contexts override these in their own (later-running) BeforeEach as needed.
+        BeforeEach {
+            Set-Variable -Name 'IsMacOS' -Value $false -Force -Scope Global
+            Set-Variable -Name 'IsLinux' -Value $false -Force -Scope Global
+        }
+
+        AfterAll {
+            Set-Variable -Name 'IsMacOS' -Value $Script:RealIsMacOS -Force -Scope Global
+            Set-Variable -Name 'IsLinux' -Value $Script:RealIsLinux -Force -Scope Global
         }
 
         Context 'Invoke-Lumos -Light' {
@@ -381,10 +402,6 @@ Describe "Invoke-Lumos PS$PSVersion" {
                 $InvokeLumos = Invoke-Lumos -Dark
             }
 
-            AfterEach {
-                Set-Variable -Name 'IsMacOS' -Value $false -Force -Scope Global
-            }
-
             It 'Should return null' {
                 $InvokeLumos | Should -Be $null
             }
@@ -416,10 +433,6 @@ Describe "Invoke-Lumos PS$PSVersion" {
                 $InvokeLumos = Invoke-Lumos -Light
             }
 
-            AfterEach {
-                Set-Variable -Name 'IsMacOS' -Value $false -Force -Scope Global
-            }
-
             It 'Should switch to light mode via AppleScript' {
                 Should -Invoke Invoke-AppleScript -Times 1 -Exactly -ParameterFilter {
                     $Command -eq 'tell application \"System Events\" to tell appearance preferences to set dark mode to false'
@@ -433,10 +446,6 @@ Describe "Invoke-Lumos PS$PSVersion" {
                 Set-Variable -Name 'IsMacOS' -Value $true -Force -Scope Global
 
                 $InvokeLumos = Invoke-Lumos
-            }
-
-            AfterEach {
-                Set-Variable -Name 'IsMacOS' -Value $false -Force -Scope Global
             }
 
             It 'Should not look up the user location' {
@@ -456,10 +465,6 @@ Describe "Invoke-Lumos PS$PSVersion" {
                 Set-Variable -Name 'IsMacOS' -Value $true -Force -Scope Global
 
                 $InvokeLumos = Invoke-Lumos -Dark -DarkWallpaper 'c:\some\wallpaper.png'
-            }
-
-            AfterEach {
-                Set-Variable -Name 'IsMacOS' -Value $false -Force -Scope Global
             }
 
             It 'Should call AppleScript twice: once for the theme, once for the wallpaper' {
@@ -485,10 +490,6 @@ Describe "Invoke-Lumos PS$PSVersion" {
                 $InvokeLumos = Invoke-Lumos -Dark -ExcludeSystem -ExcludeApps -IncludeOfficeProPlus
             }
 
-            AfterEach {
-                Set-Variable -Name 'IsMacOS' -Value $false -Force -Scope Global
-            }
-
             It 'Should warn that each Windows-only switch is unsupported on MacOS' {
                 Should -Invoke Write-Error -Times 3 -Exactly
             }
@@ -498,10 +499,6 @@ Describe "Invoke-Lumos PS$PSVersion" {
 
             BeforeEach {
                 Set-Variable -Name 'IsLinux' -Value $true -Force -Scope Global
-            }
-
-            AfterEach {
-                Set-Variable -Name 'IsLinux' -Value $false -Force -Scope Global
             }
 
             It 'Should throw as Linux is not supported' {
