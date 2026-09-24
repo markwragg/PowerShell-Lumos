@@ -8,13 +8,13 @@ Sets the Windows or Mac Theme to light or dark mode dependent on time of day.
 ### Dark (Default)
 ```
 Invoke-Lumos [-Dark] [-ExcludeSystem] [-IncludeOfficeProPlus] [-ExcludeApps] [-DarkWallpaper <String>]
- [-LightWallpaper <String>] [<CommonParameters>]
+ [-LightWallpaper <String>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Light
 ```
 Invoke-Lumos [-Light] [-ExcludeSystem] [-IncludeOfficeProPlus] [-ExcludeApps] [-DarkWallpaper <String>]
- [-LightWallpaper <String>] [<CommonParameters>]
+ [-LightWallpaper <String>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -153,6 +153,21 @@ Specify a path to use to modify the Desktop Wallpaper to when switching to the L
 Type: String
 Parameter Sets: (All)
 Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ProgressAction
+{{Fill ProgressAction Description}}
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
 
 Required: False
 Position: Named
