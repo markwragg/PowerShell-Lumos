@@ -1,6 +1,6 @@
 # Change Log
 
-## !Deploy
+## [2.0.1] - 2026-09-24
 
 * [BugFix] `Invoke-Lumos -IncludeOfficeProPlus` no longer throws a `ParameterBindingException` when a signed-in Office identity is found, caused by a `Write-Verbose` call passing it two positional arguments instead of one interpolated string.
 
