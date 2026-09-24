@@ -13,12 +13,15 @@ Describe "Invoke-AppleScript PS$PSVersion" {
 
     InModuleScope Lumos {
 
-        BeforeEach {
+        BeforeAll {
 
             # osascript is a fixed external path rather than a cmdlet, so a stub function has to exist
-            # under that literal name before Pester can shim it with Mock. The alias Mock leaves behind
-            # from the previous test's mock function is removed first so it doesn't dangle.
-            Remove-Item -Path 'Alias:\/usr/bin/osascript' -Force -ErrorAction SilentlyContinue
+            # under that literal name before Pester can shim it with Mock. This only runs once (rather
+            # than per-test in a BeforeEach) because re-mocking the same external-path command across
+            # multiple tests left Pester's own alias pointing at a mock function it had already torn
+            # down, throwing "points to a command ... that ... no longer exists" on every test after
+            # the first - Mock's call-history tracking already resets per-test on its own, so a single
+            # BeforeAll mock (the same pattern every other test file in this repo uses) is sufficient.
             New-Item -Path Function:\ -Name '/usr/bin/osascript' -Value {} -Force | Out-Null
             Mock '/usr/bin/osascript' {}
         }

@@ -9,18 +9,18 @@ if (Get-Module -Name $Module) {
 }
 Import-Module "$Root\$Module" -Force
 
+# -IncludeOfficeProPlus exercises Set-ItemProperty's registry-provider-only "-Type" dynamic parameter,
+# which only exists when a real Windows registry provider is loaded - Pester's mock proxy is built by
+# reflecting on the real cmdlet, so on non-Windows it has no "-Type" parameter to accept. Invoke-Lumos.ps1
+# itself already documents -IncludeOfficeProPlus as Windows-only (it writes an error for it on MacOS), so
+# these contexts only run on Windows, same as Register-LumosScheduledTask.Tests.ps1's platform guard.
+$IsWindowsPlatform = $PSVersionTable.PSEdition -eq 'Desktop' -or $IsWindows
+
 Describe "Invoke-Lumos PS$PSVersion" {
 
     InModuleScope Lumos {
 
         BeforeAll {
-
-            # Invoke-Lumos branches on the real $IsMacOS/$IsLinux automatic variables (there's no
-            # injectable platform parameter), so the values captured here are what AfterAll restores
-            # once this file is done - otherwise the per-context overrides below would leak into
-            # later test files sharing this same Pester process.
-            $Script:RealIsMacOS = $IsMacOS
-            $Script:RealIsLinux = $IsLinux
 
             Mock Get-UserLocation {
                 [pscustomobject]@{
@@ -57,14 +57,21 @@ Describe "Invoke-Lumos PS$PSVersion" {
         # contexts below exercise the Windows branch regardless of which real OS the CI runner is -
         # without this, they only passed by coincidence of running on a Windows agent. The "on MacOS"
         # / "on Linux" contexts override these in their own (later-running) BeforeEach as needed.
+        #
+        # Scoped to Script (the Lumos module's own top-level scope, since we're inside InModuleScope),
+        # not Global - Invoke-Lumos resolves $IsMacOS/$IsLinux through its module's scope chain, so a
+        # Script-scoped shadow is enough to fool it. Overwriting the real Global automatic variables
+        # instead would also fool Pester's own internal OS detection (used to build failure reports),
+        # so any test throwing while that override was active would crash Pester's own error handling
+        # instead of reporting the test's real failure.
         BeforeEach {
-            Set-Variable -Name 'IsMacOS' -Value $false -Force -Scope Global
-            Set-Variable -Name 'IsLinux' -Value $false -Force -Scope Global
+            Set-Variable -Name 'IsMacOS' -Value $false -Force -Scope Script
+            Set-Variable -Name 'IsLinux' -Value $false -Force -Scope Script
         }
 
         AfterAll {
-            Set-Variable -Name 'IsMacOS' -Value $Script:RealIsMacOS -Force -Scope Global
-            Set-Variable -Name 'IsLinux' -Value $Script:RealIsLinux -Force -Scope Global
+            Remove-Variable -Name 'IsMacOS' -Scope Script -Force -ErrorAction SilentlyContinue
+            Remove-Variable -Name 'IsLinux' -Scope Script -Force -ErrorAction SilentlyContinue
         }
 
         Context 'Invoke-Lumos -Light' {
@@ -340,7 +347,7 @@ Describe "Invoke-Lumos PS$PSVersion" {
             }
         }
 
-        Context 'Invoke-Lumos -Dark -IncludeOfficeProPlus' {
+        Context 'Invoke-Lumos -Dark -IncludeOfficeProPlus' -Skip:(-not $IsWindowsPlatform) {
 
             BeforeEach {
                 $InvokeLumos = Invoke-Lumos -Dark -IncludeOfficeProPlus
@@ -357,7 +364,7 @@ Describe "Invoke-Lumos PS$PSVersion" {
             }
         }
 
-        Context 'Invoke-Lumos -Light -IncludeOfficeProPlus with O365ProPlus installed' {
+        Context 'Invoke-Lumos -Light -IncludeOfficeProPlus with O365ProPlus installed' -Skip:(-not $IsWindowsPlatform) {
 
             BeforeEach {
                 # Default for every other Test-Path call (e.g. the Office Identities registry key), so it behaves
@@ -378,7 +385,7 @@ Describe "Invoke-Lumos PS$PSVersion" {
             }
         }
 
-        Context 'Invoke-Lumos -Light -IncludeOfficeProPlus without O365ProPlus installed' {
+        Context 'Invoke-Lumos -Light -IncludeOfficeProPlus without O365ProPlus installed' -Skip:(-not $IsWindowsPlatform) {
 
             BeforeEach {
                 # Default for every Test-Path call, including the Office Identities registry key check.
@@ -397,7 +404,7 @@ Describe "Invoke-Lumos PS$PSVersion" {
         Context 'Invoke-Lumos -Dark on MacOS' {
 
             BeforeEach {
-                Set-Variable -Name 'IsMacOS' -Value $true -Force -Scope Global
+                Set-Variable -Name 'IsMacOS' -Value $true -Force -Scope Script
 
                 $InvokeLumos = Invoke-Lumos -Dark
             }
@@ -428,7 +435,7 @@ Describe "Invoke-Lumos PS$PSVersion" {
         Context 'Invoke-Lumos -Light on MacOS' {
 
             BeforeEach {
-                Set-Variable -Name 'IsMacOS' -Value $true -Force -Scope Global
+                Set-Variable -Name 'IsMacOS' -Value $true -Force -Scope Script
 
                 $InvokeLumos = Invoke-Lumos -Light
             }
@@ -443,7 +450,7 @@ Describe "Invoke-Lumos PS$PSVersion" {
         Context 'Invoke-Lumos on MacOS with no -Dark or -Light switch' {
 
             BeforeEach {
-                Set-Variable -Name 'IsMacOS' -Value $true -Force -Scope Global
+                Set-Variable -Name 'IsMacOS' -Value $true -Force -Scope Script
 
                 $InvokeLumos = Invoke-Lumos
             }
@@ -462,7 +469,7 @@ Describe "Invoke-Lumos PS$PSVersion" {
         Context 'Invoke-Lumos -Dark -DarkWallpaper on MacOS' {
 
             BeforeEach {
-                Set-Variable -Name 'IsMacOS' -Value $true -Force -Scope Global
+                Set-Variable -Name 'IsMacOS' -Value $true -Force -Scope Script
 
                 $InvokeLumos = Invoke-Lumos -Dark -DarkWallpaper 'c:\some\wallpaper.png'
             }
@@ -485,7 +492,7 @@ Describe "Invoke-Lumos PS$PSVersion" {
         Context 'Invoke-Lumos -Dark -ExcludeSystem -ExcludeApps -IncludeOfficeProPlus on MacOS' {
 
             BeforeEach {
-                Set-Variable -Name 'IsMacOS' -Value $true -Force -Scope Global
+                Set-Variable -Name 'IsMacOS' -Value $true -Force -Scope Script
 
                 $InvokeLumos = Invoke-Lumos -Dark -ExcludeSystem -ExcludeApps -IncludeOfficeProPlus
             }
@@ -498,7 +505,7 @@ Describe "Invoke-Lumos PS$PSVersion" {
         Context 'Invoke-Lumos on Linux' {
 
             BeforeEach {
-                Set-Variable -Name 'IsLinux' -Value $true -Force -Scope Global
+                Set-Variable -Name 'IsLinux' -Value $true -Force -Scope Script
             }
 
             It 'Should throw as Linux is not supported' {
