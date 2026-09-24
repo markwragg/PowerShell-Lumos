@@ -209,7 +209,7 @@ Function Invoke-Lumos {
                     $identityPath = ($_.Name.Replace('HKEY_CURRENT_USER', 'HKCU:') + "\Settings\1186\{00000000-0000-0000-0000-000000000000}");
 
                     if (Get-ItemProperty -Path $identityPath -Name 'Data' -ErrorAction Ignore) {
-                        Write-Verbose 'Active identity path for ProPlus installation: ' $identityPath
+                        Write-Verbose "Active identity path for ProPlus installation: $identityPath"
 
                         Set-ItemProperty -Path $identityPath -Name 'Data' -Value ([byte[]]($proPlusThemeValue, 0, 0, 0)) -Type Binary
                     }
