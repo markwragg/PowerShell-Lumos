@@ -8,6 +8,7 @@
 * [Feature] `Register-LumosScheduledTask` now accepts `-Sunrise` and `-Sunset` to register the "Lumos" task with fixed daily trigger times of your choosing, instead of automatically looking up your location's sunrise/sunset. Since fixed times don't need to be kept current with the season, the "Lumos-Maintenance" task is not registered when they're specified.
 * [Feature] `Register-LumosScheduledTask -FromNightLight` registers the "Lumos" task using whichever schedule Windows' own Night Light feature is currently configured with, instead of looking up sunrise/sunset. Adds the private `Get-NightLightSchedule`, which reads this directly from the registry - reverse-engineered, since Night Light doesn't expose its schedule through any documented API. As with `-Sunrise`/`-Sunset`, the "Lumos-Maintenance" task is not registered, since the schedule is only read once, at registration time.
 * [Breaking] `Register-LumosScheduledTask` now returns the registered scheduled task(s) instead of `$null`, so it's always visible what was registered (and, for `-FromNightLight` or the automatic sunrise/sunset lookup, what times were actually picked up) without needing `-Verbose`.
+* [BugFix] `Register-LumosScheduledTask -Sunrise`/`-Sunset`/`-FromNightLight` now removes any "Lumos-Maintenance" task left over from a previous registration with the automatic lookup, instead of leaving it in place to silently overwrite the fixed schedule a week later.
 
 ## [2.0.1] - 2026-09-24
 

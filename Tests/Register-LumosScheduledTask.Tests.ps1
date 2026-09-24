@@ -25,6 +25,11 @@ Describe "Register-LumosScheduledTask PS$PSVersion" -Skip:(-not $IsWindowsPlatfo
             # Register-LumosScheduledTask now returns whatever this call returns.
             Mock Register-ScheduledTask { [pscustomobject]@{ TaskName = $TaskName; Triggers = $InputObject.Triggers } }
 
+            # Default: no pre-existing "Lumos-Maintenance" task, so the -Sunrise/-Sunset and -FromNightLight
+            # cleanup logic has nothing to remove. Individual contexts below override this to verify removal.
+            Mock Get-ScheduledTask {}
+            Mock Unregister-ScheduledTask {}
+
             # Get-UserLocation/Get-LocalDaylight call live external APIs - mocking them keeps these tests
             # deterministic and network-free, and lets the exact trigger times below be asserted precisely.
             # Millisecond is zeroed so the mocked value round-trips exactly through the CIM trigger's
@@ -141,6 +146,11 @@ Describe "Register-LumosScheduledTask PS$PSVersion" -Skip:(-not $IsWindowsPlatfo
                     $InputObject.Actions[0].Arguments -like "*Import-Module '$Script:ExpectedModulePath' -Force;*"
                 }
             }
+
+            It 'Should not check for or remove any existing Lumos-Maintenance task, since one is being registered anyway' {
+                Should -Invoke Get-ScheduledTask -Times 0 -Exactly
+                Should -Invoke Unregister-ScheduledTask -Times 0 -Exactly
+            }
         }
 
         Context 'Register-LumosScheduledTask when the current location cannot be determined' {
@@ -192,6 +202,30 @@ Describe "Register-LumosScheduledTask PS$PSVersion" -Skip:(-not $IsWindowsPlatfo
                 }
                 Should -Invoke Register-ScheduledTask -Times 1 -Exactly
             }
+
+            It 'Should check for an existing Lumos-Maintenance task, but not remove one since none exists' {
+                Should -Invoke Get-ScheduledTask -Times 1 -Exactly -ParameterFilter {
+                    $TaskName -eq 'Lumos-Maintenance'
+                }
+                Should -Invoke Unregister-ScheduledTask -Times 0 -Exactly
+            }
+        }
+
+        Context 'Register-LumosScheduledTask -Sunrise -Sunset when a Lumos-Maintenance task already exists' {
+
+            BeforeEach {
+                Mock Get-ScheduledTask {
+                    [pscustomobject]@{ TaskName = 'Lumos-Maintenance' }
+                } -ParameterFilter { $TaskName -eq 'Lumos-Maintenance' }
+
+                Register-LumosScheduledTask -Sunrise $Script:MockSunrise -Sunset $Script:MockSunset
+            }
+
+            It 'Should remove the existing Lumos-Maintenance task, since it is not needed for a fixed schedule' {
+                Should -Invoke Unregister-ScheduledTask -Times 1 -Exactly -ParameterFilter {
+                    $TaskName -eq 'Lumos-Maintenance'
+                }
+            }
         }
 
         Context 'Register-LumosScheduledTask -FromNightLight' {
@@ -240,6 +274,37 @@ Describe "Register-LumosScheduledTask PS$PSVersion" -Skip:(-not $IsWindowsPlatfo
                     $TaskName -eq 'Lumos-Maintenance'
                 }
                 Should -Invoke Register-ScheduledTask -Times 1 -Exactly
+            }
+
+            It 'Should check for an existing Lumos-Maintenance task, but not remove one since none exists' {
+                Should -Invoke Get-ScheduledTask -Times 1 -Exactly -ParameterFilter {
+                    $TaskName -eq 'Lumos-Maintenance'
+                }
+                Should -Invoke Unregister-ScheduledTask -Times 0 -Exactly
+            }
+        }
+
+        Context 'Register-LumosScheduledTask -FromNightLight when a Lumos-Maintenance task already exists' {
+
+            BeforeEach {
+                Mock Get-NightLightSchedule {
+                    [pscustomobject]@{
+                        Sunrise = $Script:MockSunrise
+                        Sunset  = $Script:MockSunset
+                    }
+                }
+
+                Mock Get-ScheduledTask {
+                    [pscustomobject]@{ TaskName = 'Lumos-Maintenance' }
+                } -ParameterFilter { $TaskName -eq 'Lumos-Maintenance' }
+
+                Register-LumosScheduledTask -FromNightLight
+            }
+
+            It 'Should remove the existing Lumos-Maintenance task, since it is not needed for a fixed schedule' {
+                Should -Invoke Unregister-ScheduledTask -Times 1 -Exactly -ParameterFilter {
+                    $TaskName -eq 'Lumos-Maintenance'
+                }
             }
         }
 

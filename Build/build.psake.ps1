@@ -106,6 +106,15 @@ Task 'CombineFunctionsAndStage' -Depends 'Clean' {
 
     # Copy existing manifest
     Copy-Item -Path $env:BHPSModuleManifest -Destination $StagingModulePath -Recurse
+
+    # Copy any format/type files (e.g. Lumos.Format.ps1xml) referenced by the manifest's
+    # FormatsToProcess/TypesToProcess - these need to sit next to the manifest for Import-Module (and
+    # Publish-Module, which just publishes whatever's in this folder) to find them.
+    $Ps1XmlFiles = @( Get-ChildItem -Path "$env:BHModulePath\*.ps1xml" -ErrorAction 'SilentlyContinue' )
+
+    foreach ($File in $Ps1XmlFiles) {
+        Copy-Item -Path $File.FullName -Destination $StagingModulePath
+    }
 }
 
 

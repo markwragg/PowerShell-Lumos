@@ -87,7 +87,7 @@ You can specify any of the `Invoke-Lumos` switches above when registering the ta
 Register-LumosScheduledTask -ExcludeApps -DarkWallpaper c:\wallpaper\dark.png -LightWallpaper c:\wallpaper\light.png
 ```
 
-If you'd rather not have Lumos look up your location, you can specify fixed daily times yourself with `-Sunrise`/`-Sunset`, or reuse whatever schedule Windows' own Night Light feature (Settings > System > Display > Night light) is already configured with via `-FromNightLight`. Since neither of these needs to be kept in sync with the season, the "Lumos-Maintenance" task isn't registered in either case - re-run the cmdlet if you want to pick up a later change:
+If you'd rather not have Lumos look up your location, you can specify fixed daily times yourself with `-Sunrise`/`-Sunset`, or reuse whatever schedule Windows' own Night Light feature (Settings > System > Display > Night light) is already configured with via `-FromNightLight`. Since neither of these needs to be kept in sync with the season, the "Lumos-Maintenance" task isn't registered in either case (and is removed if one was already registered from a previous, non-fixed run) - re-run the cmdlet if you want to pick up a later change:
 
 ```PowerShell
 Register-LumosScheduledTask -Sunrise '07:00' -Sunset '19:00'

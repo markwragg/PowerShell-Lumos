@@ -24,7 +24,9 @@ Function Register-LumosScheduledTask {
             -FromNightLight to reuse whichever schedule Windows' own Night Light feature is currently
             configured with. Since neither of those need to be kept current with the season the way an
             automatic lookup does, the "Lumos-Maintenance" task isn't registered in either case - re-run this
-            cmdlet if the Night Light schedule you're reusing later changes.
+            cmdlet if the Night Light schedule you're reusing later changes. If a "Lumos-Maintenance" task was
+            already registered from a previous run (e.g. you're switching from the automatic lookup to a fixed
+            schedule), it's removed, since it would otherwise keep overwriting your fixed times weekly.
 
             Both tasks run as the current user at standard (non-elevated) privilege - Lumos only ever changes
             current-user settings, so no administrator rights are required. Neither task has an "at logon"
@@ -223,6 +225,14 @@ Function Register-LumosScheduledTask {
     )
 
     if ($UseCustomDaylight) {
+        # A fixed schedule doesn't need weekly upkeep - remove any "Lumos-Maintenance" task left over from a
+        # previous registration with the automatic lookup, since it would otherwise keep overwriting these
+        # fixed trigger times with a freshly looked-up sunrise/sunset every week.
+        if (Get-ScheduledTask -TaskName 'Lumos-Maintenance' -ErrorAction SilentlyContinue) {
+            Write-Verbose 'Removing existing Lumos-Maintenance task, since it is not needed for a fixed schedule..'
+            Unregister-ScheduledTask -TaskName 'Lumos-Maintenance' -Confirm:$false
+        }
+
         return $LumosTask
     }
 
