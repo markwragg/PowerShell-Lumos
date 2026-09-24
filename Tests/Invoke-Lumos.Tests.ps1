@@ -41,6 +41,8 @@ Describe "Invoke-Lumos PS$PSVersion" {
 
             Mock Stop-Process {}
 
+            Mock Send-SettingChangeMessage {}
+
             Mock Invoke-AppleScript {}
 
             Mock Write-Error {}
@@ -89,10 +91,9 @@ Describe "Invoke-Lumos PS$PSVersion" {
                 Should -Invoke Set-Wallpaper -Times 0 -Exactly
             }
 
-            It 'Should restart Explorer so the taskbar picks up the theme change' {
-                Should -Invoke Stop-Process -Times 1 -Exactly -ParameterFilter {
-                    $ProcessName -eq 'explorer'
-                }
+            It 'Should broadcast a WM_SETTINGCHANGE message so the taskbar picks up the theme change' {
+                Should -Invoke Send-SettingChangeMessage -Times 1 -Exactly
+                Should -Invoke Stop-Process -Times 0 -Exactly
             }
         }
 
@@ -118,10 +119,46 @@ Describe "Invoke-Lumos PS$PSVersion" {
                 Should -Invoke Set-Wallpaper -Times 0 -Exactly
             }
 
-            It 'Should restart Explorer so the taskbar picks up the theme change' {
+            It 'Should broadcast a WM_SETTINGCHANGE message so the taskbar picks up the theme change' {
+                Should -Invoke Send-SettingChangeMessage -Times 1 -Exactly
+                Should -Invoke Stop-Process -Times 0 -Exactly
+            }
+        }
+
+        Context 'Invoke-Lumos -Dark -RestartExplorer' {
+
+            BeforeEach {
+                $InvokeLumos = Invoke-Lumos -Dark -RestartExplorer
+            }
+
+            It 'Should return null' {
+                $InvokeLumos | Should -Be $null
+            }
+
+            It 'Should restart Explorer instead of broadcasting a WM_SETTINGCHANGE message' {
                 Should -Invoke Stop-Process -Times 1 -Exactly -ParameterFilter {
                     $ProcessName -eq 'explorer'
                 }
+                Should -Invoke Send-SettingChangeMessage -Times 0 -Exactly
+            }
+        }
+
+        Context 'Invoke-Lumos -Dark -RestartExplorer when the System theme is already Dark' {
+
+            BeforeEach {
+                Mock Get-ItemProperty {
+                    [pscustomobject]@{
+                        SystemUsesLightTheme = 0
+                        AppsUseLightTheme    = 0
+                    }
+                } -ParameterFilter { $Name -eq 'SystemUsesLightTheme' -or $Name -eq 'AppsUseLightTheme' }
+
+                $InvokeLumos = Invoke-Lumos -Dark -RestartExplorer
+            }
+
+            It 'Should not restart Explorer, since the System theme did not change' {
+                Should -Invoke Stop-Process -Times 0 -Exactly
+                Should -Invoke Send-SettingChangeMessage -Times 0 -Exactly
             }
         }
 
@@ -147,8 +184,9 @@ Describe "Invoke-Lumos PS$PSVersion" {
                 Should -Invoke Set-Wallpaper -Times 0 -Exactly
             }
 
-            It 'Should still restart Explorer, since the System theme was still set' {
-                Should -Invoke Stop-Process -Times 1 -Exactly
+            It 'Should still broadcast a WM_SETTINGCHANGE message, since the System theme was still set' {
+                Should -Invoke Send-SettingChangeMessage -Times 1 -Exactly
+                Should -Invoke Stop-Process -Times 0 -Exactly
             }
         }
 
@@ -174,8 +212,9 @@ Describe "Invoke-Lumos PS$PSVersion" {
                 Should -Invoke Set-Wallpaper -Times 1 -Exactly
             }
 
-            It 'Should restart Explorer so the taskbar picks up the theme change' {
-                Should -Invoke Stop-Process -Times 1 -Exactly
+            It 'Should broadcast a WM_SETTINGCHANGE message so the taskbar picks up the theme change' {
+                Should -Invoke Send-SettingChangeMessage -Times 1 -Exactly
+                Should -Invoke Stop-Process -Times 0 -Exactly
             }
         }
 
@@ -201,8 +240,9 @@ Describe "Invoke-Lumos PS$PSVersion" {
                 Should -Invoke Set-Wallpaper -Times 1 -Exactly
             }
 
-            It 'Should restart Explorer so the taskbar picks up the theme change' {
-                Should -Invoke Stop-Process -Times 1 -Exactly
+            It 'Should broadcast a WM_SETTINGCHANGE message so the taskbar picks up the theme change' {
+                Should -Invoke Send-SettingChangeMessage -Times 1 -Exactly
+                Should -Invoke Stop-Process -Times 0 -Exactly
             }
         }
 
@@ -245,8 +285,9 @@ Describe "Invoke-Lumos PS$PSVersion" {
                 Should -Invoke Set-Wallpaper -Times 0 -Exactly
             }
 
-            It 'Should restart Explorer so the taskbar picks up the theme change' {
-                Should -Invoke Stop-Process -Times 1 -Exactly
+            It 'Should broadcast a WM_SETTINGCHANGE message so the taskbar picks up the theme change' {
+                Should -Invoke Send-SettingChangeMessage -Times 1 -Exactly
+                Should -Invoke Stop-Process -Times 0 -Exactly
             }
         }
 
@@ -306,7 +347,8 @@ Describe "Invoke-Lumos PS$PSVersion" {
                 }
             }
 
-            It 'Should not restart Explorer, since the taskbar follows the System theme, which was excluded' {
+            It 'Should not broadcast a WM_SETTINGCHANGE message, since the taskbar follows the System theme, which was excluded' {
+                Should -Invoke Send-SettingChangeMessage -Times 0 -Exactly
                 Should -Invoke Stop-Process -Times 0 -Exactly
             }
         }
@@ -332,7 +374,8 @@ Describe "Invoke-Lumos PS$PSVersion" {
                 Should -Invoke Set-ItemProperty -Times 0 -Exactly
             }
 
-            It 'Should not restart Explorer, since the System theme did not change' {
+            It 'Should not broadcast a WM_SETTINGCHANGE message, since the System theme did not change' {
+                Should -Invoke Send-SettingChangeMessage -Times 0 -Exactly
                 Should -Invoke Stop-Process -Times 0 -Exactly
             }
         }
@@ -356,7 +399,8 @@ Describe "Invoke-Lumos PS$PSVersion" {
                 }
             }
 
-            It 'Should not restart Explorer, since the System theme did not change' {
+            It 'Should not broadcast a WM_SETTINGCHANGE message, since the System theme did not change' {
+                Should -Invoke Send-SettingChangeMessage -Times 0 -Exactly
                 Should -Invoke Stop-Process -Times 0 -Exactly
             }
         }
@@ -375,7 +419,8 @@ Describe "Invoke-Lumos PS$PSVersion" {
                 Should -Invoke Set-ItemProperty -Times 0 -Exactly
             }
 
-            It 'Should not restart Explorer, since nothing changed' {
+            It 'Should not broadcast a WM_SETTINGCHANGE message, since nothing changed' {
+                Should -Invoke Send-SettingChangeMessage -Times 0 -Exactly
                 Should -Invoke Stop-Process -Times 0 -Exactly
             }
         }
@@ -500,7 +545,8 @@ Describe "Invoke-Lumos PS$PSVersion" {
                 Should -Invoke Set-ItemProperty -Times 0 -Exactly
             }
 
-            It 'Should not restart Explorer, since MacOS has no such concept' {
+            It 'Should not restart Explorer or broadcast a WM_SETTINGCHANGE message, since MacOS has no such concept' {
+                Should -Invoke Send-SettingChangeMessage -Times 0 -Exactly
                 Should -Invoke Stop-Process -Times 0 -Exactly
             }
         }

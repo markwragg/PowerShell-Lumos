@@ -17,6 +17,11 @@ Function Invoke-Lumos {
         .PARAMETER ExcludeSystem
             Exclude changing the System theme when switching to Dark/Light (Windows only).
 
+        .PARAMETER RestartExplorer
+            Restart Explorer to apply the System theme change to the taskbar (Windows only), instead of the
+            default of broadcasting a WM_SETTINGCHANGE message. Use this if the taskbar still doesn't update
+            without it on your system.
+
         .PARAMETER IncludeOfficeProPlus
             Include changing the theme of Microsoft Office to Dark/Light (Windows only).
 
@@ -45,6 +50,12 @@ Function Invoke-Lumos {
             Switches the OS theme to Dark, but (on Windows only) does not change the theme of apps that support
             Dark/Light theme.
 
+        .EXAMPLE
+            Invoke-Lumos -Dark -RestartExplorer
+
+            Switches the OS theme to Dark and restarts Explorer (Windows only) to apply the change to the
+            taskbar, instead of the default of broadcasting a WM_SETTINGCHANGE message.
+
         .Example
             Invoke-Lumos
 
@@ -63,6 +74,9 @@ Function Invoke-Lumos {
 
         [switch]
         $ExcludeSystem,
+
+        [switch]
+        $RestartExplorer,
 
         [switch]
         $IncludeOfficeProPlus,
@@ -171,11 +185,17 @@ Function Invoke-Lumos {
                 Set-ItemProperty -Path $ThemeRegKey -Name 'SystemUsesLightTheme' -Value $Lumos
 
                 # The taskbar (and Start, Action Center) follow SystemUsesLightTheme, not AppsUseLightTheme, and
-                # Explorer's taskbar - including on secondary monitors - only repaints correctly after being
-                # restarted. Only doing this when the theme actually changed avoids restarting Explorer on every
-                # run of a frequently scheduled task (e.g. Register-LumosScheduledTask's 15 minute trigger).
-                Write-Verbose 'Restarting Explorer to apply the theme change to the taskbar..'
-                Stop-Process -ProcessName explorer
+                # need to be told the setting changed before they'll repaint. Only doing this when the theme
+                # actually changed avoids the disruption of restarting Explorer (or even the lighter-weight
+                # broadcast below) on every run of a frequently scheduled task.
+                if ($RestartExplorer) {
+                    Write-Verbose 'Restarting Explorer to apply the theme change to the taskbar..'
+                    Stop-Process -ProcessName explorer
+                }
+                else {
+                    Write-Verbose 'Broadcasting a WM_SETTINGCHANGE message to apply the theme change to the taskbar..'
+                    Send-SettingChangeMessage
+                }
             }
         }
         if (-not $ExcludeApps) {

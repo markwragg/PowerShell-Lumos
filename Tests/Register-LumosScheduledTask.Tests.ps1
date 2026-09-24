@@ -20,8 +20,32 @@ Describe "Register-LumosScheduledTask PS$PSVersion" -Skip:(-not $IsWindowsPlatfo
 
             # New-ScheduledTask* cmdlets only build in-memory CIM objects, so they're left real rather than
             # mocked - the CimInstance-typed parameters they bind to reject plain PSCustomObject stand-ins.
-            # Register-ScheduledTask is the call with a real side effect, so it's the only one mocked.
-            Mock Register-ScheduledTask {}
+            # Register-ScheduledTask is the call with a real side effect, so it's the only one mocked - its
+            # stand-in mirrors the TaskName/Triggers a real registered task would have, since
+            # Register-LumosScheduledTask now returns whatever this call returns.
+            Mock Register-ScheduledTask { [pscustomobject]@{ TaskName = $TaskName; Triggers = $InputObject.Triggers } }
+
+            # Get-UserLocation/Get-LocalDaylight call live external APIs - mocking them keeps these tests
+            # deterministic and network-free, and lets the exact trigger times below be asserted precisely.
+            # Millisecond is zeroed so the mocked value round-trips exactly through the CIM trigger's
+            # StartBoundary string (which only has second precision) for equality comparisons below.
+            $Script:MockSunrise = Get-Date -Hour 7 -Minute 0 -Second 0 -Millisecond 0
+            $Script:MockSunset = Get-Date -Hour 19 -Minute 0 -Second 0 -Millisecond 0
+            $Script:MockSolarNoon = Get-Date -Hour 13 -Minute 0 -Second 0 -Millisecond 0
+
+            Mock Get-UserLocation {
+                [pscustomobject]@{
+                    Latitude  = 51.5074
+                    Longitude = -0.1278
+                }
+            }
+
+            Mock Get-LocalDaylight {
+                [pscustomobject]@{
+                    Sunrise = $Script:MockSunrise
+                    Sunset  = $Script:MockSunset
+                }
+            }
 
             # Mirrors Register-LumosScheduledTask's own executable-selection logic, so tests assert against
             # whichever edition (PS Core vs Windows PowerShell) is actually running them, rather than a
@@ -40,8 +64,28 @@ Describe "Register-LumosScheduledTask PS$PSVersion" -Skip:(-not $IsWindowsPlatfo
                 $RegisterLumosScheduledTask = Register-LumosScheduledTask
             }
 
-            It 'Should return null' {
-                $RegisterLumosScheduledTask | Should -Be $null
+            It 'Should return both the Lumos and Lumos-Maintenance registered tasks' {
+                $RegisterLumosScheduledTask.Count | Should -Be 2
+                $RegisterLumosScheduledTask[0].TaskName | Should -Be 'Lumos'
+                $RegisterLumosScheduledTask[1].TaskName | Should -Be 'Lumos-Maintenance'
+            }
+
+            It 'Should decorate both tasks with a custom type and a Source/Schedule summary for display' {
+                $RegisterLumosScheduledTask[0].PSObject.TypeNames | Should -Contain 'Lumos.ScheduledTask'
+                $RegisterLumosScheduledTask[0].ScheduleSource | Should -Be 'Location'
+                $RegisterLumosScheduledTask[0].Schedule | Should -Be 'Light 07:00, Dark 19:00'
+
+                $RegisterLumosScheduledTask[1].PSObject.TypeNames | Should -Contain 'Lumos.ScheduledTask'
+                $RegisterLumosScheduledTask[1].ScheduleSource | Should -Be 'Location'
+                $RegisterLumosScheduledTask[1].Schedule | Should -Be "Weekly $($Script:MockSolarNoon.DayOfWeek) 13:00"
+            }
+
+            It 'Should look up the current location and daylight times to compute the trigger times' {
+                Should -Invoke Get-UserLocation -Times 1 -Exactly
+
+                Should -Invoke Get-LocalDaylight -Times 1 -Exactly -ParameterFilter {
+                    $Latitude -eq 51.5074 -and $Longitude -eq -0.1278
+                }
             }
 
             It 'Should register a scheduled task named Lumos with one action' {
@@ -50,26 +94,186 @@ Describe "Register-LumosScheduledTask PS$PSVersion" -Skip:(-not $IsWindowsPlatfo
                 }
             }
 
-            It 'Should register the task with a single repeating 15 minute trigger and no "at logon" trigger' {
+            It 'Should register the Lumos task with daily sunrise/sunset triggers and no "at logon" trigger' {
                 Should -Invoke Register-ScheduledTask -Times 1 -Exactly -ParameterFilter {
-                    $InputObject.Triggers.Count -eq 1 -and
-                    $InputObject.Triggers[0].Repetition.Interval -eq 'PT15M' -and
-                    $InputObject.Triggers[0].CimClass.CimClassName -ne 'MSFT_TaskLogonTrigger'
+                    $TaskName -eq 'Lumos' -and
+                    $InputObject.Triggers.Count -eq 2 -and
+                    ($InputObject.Triggers | Where-Object { $_.CimClass.CimClassName -eq 'MSFT_TaskLogonTrigger' }).Count -eq 0 -and
+                    ([datetime]$InputObject.Triggers[0].StartBoundary) -eq $Script:MockSunrise -and
+                    ([datetime]$InputObject.Triggers[1].StartBoundary) -eq $Script:MockSunset
                 }
             }
 
             It 'Should register the task to run as the current user without requiring elevation' {
                 Should -Invoke Register-ScheduledTask -Times 1 -Exactly -ParameterFilter {
+                    $TaskName -eq 'Lumos' -and
                     $InputObject.Principal.UserId -eq $env:USERNAME -and
                     $InputObject.Principal.RunLevel -eq 'Limited'
                 }
+            }
+
+            It 'Should also register a Lumos-Maintenance task with a single weekly trigger at solar noon' {
+                # Mirrors Register-LumosScheduledTask's own DaysOfWeek computation, rather than hand-deriving
+                # the CIM bitmask (Sunday=1, Monday=2, Tuesday=4, ...) separately here.
+                $Script:ExpectedDaysOfWeek = (New-ScheduledTaskTrigger -Weekly -DaysOfWeek (Get-Date).DayOfWeek -At $Script:MockSolarNoon).DaysOfWeek
+
+                Should -Invoke Register-ScheduledTask -Times 1 -Exactly -ParameterFilter {
+                    $TaskName -eq 'Lumos-Maintenance' -and
+                    $Force -and
+                    $InputObject.Triggers.Count -eq 1 -and
+                    $InputObject.Triggers[0].CimClass.CimClassName -eq 'MSFT_TaskWeeklyTrigger' -and
+                    $InputObject.Triggers[0].DaysOfWeek -eq $Script:ExpectedDaysOfWeek -and
+                    ([datetime]$InputObject.Triggers[0].StartBoundary) -eq $Script:MockSolarNoon -and
+                    $InputObject.Actions[0].Arguments -like '*Update-LumosScheduledTask*'
+                }
+            }
+
+            It 'Should have both tasks explicitly import Lumos from its own module path, rather than relying on auto-loading' {
+                $Script:ExpectedModulePath = (Get-Module -Name 'Lumos').Path
+
+                Should -Invoke Register-ScheduledTask -Times 1 -Exactly -ParameterFilter {
+                    $TaskName -eq 'Lumos' -and
+                    $InputObject.Actions[0].Arguments -like "*Import-Module '$Script:ExpectedModulePath' -Force;*"
+                }
+
+                Should -Invoke Register-ScheduledTask -Times 1 -Exactly -ParameterFilter {
+                    $TaskName -eq 'Lumos-Maintenance' -and
+                    $InputObject.Actions[0].Arguments -like "*Import-Module '$Script:ExpectedModulePath' -Force;*"
+                }
+            }
+        }
+
+        Context 'Register-LumosScheduledTask when the current location cannot be determined' {
+
+            BeforeEach {
+                Mock Get-UserLocation {}
+            }
+
+            It 'Should throw and not register any scheduled task' {
+                { Register-LumosScheduledTask } | Should -Throw 'Could not get sunrise/sunset data for the current user.'
+
+                Should -Invoke Register-ScheduledTask -Times 0 -Exactly
+            }
+        }
+
+        Context 'Register-LumosScheduledTask -Sunrise -Sunset' {
+
+            BeforeEach {
+                $RegisterLumosScheduledTask = Register-LumosScheduledTask -Sunrise $Script:MockSunrise -Sunset $Script:MockSunset
+            }
+
+            It 'Should return just the registered Lumos task' {
+                $RegisterLumosScheduledTask.TaskName | Should -Be 'Lumos'
+            }
+
+            It 'Should decorate the task with a custom type and a Source/Schedule summary for display' {
+                $RegisterLumosScheduledTask.PSObject.TypeNames | Should -Contain 'Lumos.ScheduledTask'
+                $RegisterLumosScheduledTask.ScheduleSource | Should -Be 'Custom'
+                $RegisterLumosScheduledTask.Schedule | Should -Be 'Light 07:00, Dark 19:00'
+            }
+
+            It 'Should not look up the current location or daylight times' {
+                Should -Invoke Get-UserLocation -Times 0 -Exactly
+                Should -Invoke Get-LocalDaylight -Times 0 -Exactly
+            }
+
+            It 'Should register the Lumos task using the specified sunrise/sunset trigger times' {
+                Should -Invoke Register-ScheduledTask -Times 1 -Exactly -ParameterFilter {
+                    $TaskName -eq 'Lumos' -and
+                    $InputObject.Triggers.Count -eq 2 -and
+                    ([datetime]$InputObject.Triggers[0].StartBoundary) -eq $Script:MockSunrise -and
+                    ([datetime]$InputObject.Triggers[1].StartBoundary) -eq $Script:MockSunset
+                }
+            }
+
+            It 'Should not register a Lumos-Maintenance task, since fixed times do not need updating' {
+                Should -Invoke Register-ScheduledTask -Times 0 -Exactly -ParameterFilter {
+                    $TaskName -eq 'Lumos-Maintenance'
+                }
+                Should -Invoke Register-ScheduledTask -Times 1 -Exactly
+            }
+        }
+
+        Context 'Register-LumosScheduledTask -FromNightLight' {
+
+            BeforeEach {
+                Mock Get-NightLightSchedule {
+                    [pscustomobject]@{
+                        Sunrise = $Script:MockSunrise
+                        Sunset  = $Script:MockSunset
+                    }
+                }
+
+                $RegisterLumosScheduledTask = Register-LumosScheduledTask -FromNightLight
+            }
+
+            It 'Should return just the registered Lumos task' {
+                $RegisterLumosScheduledTask.TaskName | Should -Be 'Lumos'
+            }
+
+            It 'Should decorate the task with a custom type and a Source/Schedule summary for display' {
+                $RegisterLumosScheduledTask.PSObject.TypeNames | Should -Contain 'Lumos.ScheduledTask'
+                $RegisterLumosScheduledTask.ScheduleSource | Should -Be 'Night Light'
+                $RegisterLumosScheduledTask.Schedule | Should -Be 'Light 07:00, Dark 19:00'
+            }
+
+            It 'Should not look up the current location or daylight times' {
+                Should -Invoke Get-UserLocation -Times 0 -Exactly
+                Should -Invoke Get-LocalDaylight -Times 0 -Exactly
+            }
+
+            It 'Should read the Night Light schedule' {
+                Should -Invoke Get-NightLightSchedule -Times 1 -Exactly
+            }
+
+            It 'Should register the Lumos task using the Night Light schedule trigger times' {
+                Should -Invoke Register-ScheduledTask -Times 1 -Exactly -ParameterFilter {
+                    $TaskName -eq 'Lumos' -and
+                    $InputObject.Triggers.Count -eq 2 -and
+                    ([datetime]$InputObject.Triggers[0].StartBoundary) -eq $Script:MockSunrise -and
+                    ([datetime]$InputObject.Triggers[1].StartBoundary) -eq $Script:MockSunset
+                }
+            }
+
+            It 'Should not register a Lumos-Maintenance task, since the schedule is only read once' {
+                Should -Invoke Register-ScheduledTask -Times 0 -Exactly -ParameterFilter {
+                    $TaskName -eq 'Lumos-Maintenance'
+                }
+                Should -Invoke Register-ScheduledTask -Times 1 -Exactly
+            }
+        }
+
+        Context 'Register-LumosScheduledTask -FromNightLight combined with -Sunrise/-Sunset' {
+
+            It 'Should throw and not register any scheduled task' {
+                { Register-LumosScheduledTask -FromNightLight -Sunrise $Script:MockSunrise -Sunset $Script:MockSunset } |
+                    Should -Throw '-FromNightLight cannot be combined with -Sunrise/-Sunset.'
+
+                Should -Invoke Register-ScheduledTask -Times 0 -Exactly
+            }
+        }
+
+        Context 'Register-LumosScheduledTask with only -Sunrise or only -Sunset specified' {
+
+            It 'Should throw and not register any scheduled task when only -Sunrise is specified' {
+                { Register-LumosScheduledTask -Sunrise $Script:MockSunrise } |
+                    Should -Throw '-Sunrise and -Sunset must both be specified together.'
+
+                Should -Invoke Register-ScheduledTask -Times 0 -Exactly
+            }
+
+            It 'Should throw and not register any scheduled task when only -Sunset is specified' {
+                { Register-LumosScheduledTask -Sunset $Script:MockSunset } |
+                    Should -Throw '-Sunrise and -Sunset must both be specified together.'
+
+                Should -Invoke Register-ScheduledTask -Times 0 -Exactly
             }
         }
 
         Context 'Register-LumosScheduledTask with all switches and wallpapers' {
 
             BeforeEach {
-                Register-LumosScheduledTask -ExcludeSystem -ExcludeApps -IncludeOfficeProPlus `
+                Register-LumosScheduledTask -ExcludeSystem -RestartExplorer -ExcludeApps -IncludeOfficeProPlus `
                     -DarkWallpaper 'c:\dark.png' -LightWallpaper 'c:\light.png'
             }
 
@@ -78,7 +282,9 @@ Describe "Register-LumosScheduledTask PS$PSVersion" -Skip:(-not $IsWindowsPlatfo
                     $LumosArgument = ($InputObject.Actions | Where-Object Execute -EQ $Script:ExpectedPowerShellExe |
                         Where-Object { $_.Arguments -like '*Invoke-Lumos*' }).Arguments
 
+                    $TaskName -eq 'Lumos' -and
                     $LumosArgument -like '*-ExcludeSystem*' -and
+                    $LumosArgument -like '*-RestartExplorer*' -and
                     $LumosArgument -like '*-ExcludeApps*' -and
                     $LumosArgument -like '*-IncludeOfficeProPlus*' -and
                     $LumosArgument -like "*-LightWallpaper 'c:\light.png'*" -and
@@ -94,58 +300,17 @@ Describe "Register-LumosScheduledTask PS$PSVersion" -Skip:(-not $IsWindowsPlatfo
             }
 
             It 'Should not include any optional arguments in the Lumos scheduled task action' {
+                $Script:ExpectedModulePath = (Get-Module -Name 'Lumos').Path
+
                 Should -Invoke Register-ScheduledTask -Times 1 -Exactly -ParameterFilter {
                     $LumosArgument = ($InputObject.Actions | Where-Object Execute -EQ $Script:ExpectedPowerShellExe |
                         Where-Object { $_.Arguments -like '*Invoke-Lumos*' }).Arguments
 
-                    $LumosArgument -eq '-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -Command Invoke-Lumos'
+                    $TaskName -eq 'Lumos' -and
+                    $LumosArgument -eq "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -Command Import-Module '$Script:ExpectedModulePath' -Force; Invoke-Lumos"
                 }
             }
-        }
 
-        Context 'Register-LumosScheduledTask when running under PowerShell Core' {
-
-            BeforeEach {
-                # Shadows the real $PSVersionTable (Script scope, inside InModuleScope, so this only
-                # affects code resolving the variable through the Lumos module - see the equivalent trick
-                # in Invoke-Lumos.Tests.ps1 for why Global scope would be the wrong choice here) to
-                # simulate running under PS Core regardless of which edition is actually running this test.
-                Set-Variable -Name 'PSVersionTable' -Value ([pscustomobject]@{ PSEdition = 'Core' }) -Force -Scope Script
-
-                Register-LumosScheduledTask
-            }
-
-            AfterEach {
-                # Without this, the shadow leaks into later contexts in this file - in particular the
-                # "non-Windows OS" context below relies on the real $PSVersionTable.PSEdition to correctly
-                # take its early-return path.
-                Remove-Variable -Name 'PSVersionTable' -Scope Script -Force -ErrorAction SilentlyContinue
-            }
-
-            It 'Should target pwsh.exe rather than Windows PowerShell' {
-                Should -Invoke Register-ScheduledTask -Times 1 -Exactly -ParameterFilter {
-                    $InputObject.Actions[0].Execute -eq (Join-Path -Path $PSHOME -ChildPath 'pwsh.exe')
-                }
-            }
-        }
-
-        Context 'Register-LumosScheduledTask when running under Windows PowerShell' {
-
-            BeforeEach {
-                Set-Variable -Name 'PSVersionTable' -Value ([pscustomobject]@{ PSEdition = 'Desktop' }) -Force -Scope Script
-
-                Register-LumosScheduledTask
-            }
-
-            AfterEach {
-                Remove-Variable -Name 'PSVersionTable' -Scope Script -Force -ErrorAction SilentlyContinue
-            }
-
-            It 'Should target powershell.exe rather than PS Core' {
-                Should -Invoke Register-ScheduledTask -Times 1 -Exactly -ParameterFilter {
-                    $InputObject.Actions[0].Execute -eq (Join-Path -Path $PSHOME -ChildPath 'powershell.exe')
-                }
-            }
         }
 
         Context 'Register-LumosScheduledTask on a non-Windows OS' -Skip:($PSVersionTable.PSEdition -eq 'Desktop') {

@@ -65,16 +65,41 @@ If you'd like change the theme of your Office ProPlus installation on Windows 10
 Invoke-Lumos -Dark -IncludeOfficeProPlus
 ```
 
+On Windows, when the System theme changes, Lumos applies it to the taskbar by broadcasting a `WM_SETTINGCHANGE` message rather than restarting Explorer. If that doesn't refresh the taskbar on your system, add `-RestartExplorer` to fall back to the old behavior:
+
+```PowerShell
+Invoke-Lumos -Dark -RestartExplorer
+```
+
+## Scheduling
+
 If you'd like Windows 10 to automatically switch from Light to Dark mode based on your local sunrise/sunset times, you can use the following cmdlet to add a Scheduled Task to do so (this cmdlet does not currently support MacOS Mojave):
 
 ```PowerShell
 Register-LumosScheduledTask
 ```
 
-Note you can specify all the above switches when doing this to customize the result. For example:
+This registers a "Lumos" scheduled task that runs `Invoke-Lumos` twice a day, at your local sunrise and sunset, plus a second "Lumos-Maintenance" task that runs once a week to keep those times current as sunrise/sunset drift through the year. Both tasks run as your own (non-administrator) user account.
+
+You can specify any of the `Invoke-Lumos` switches above when registering the task to customize the result. For example:
 
 ```PowerShell
 Register-LumosScheduledTask -ExcludeApps -DarkWallpaper c:\wallpaper\dark.png -LightWallpaper c:\wallpaper\light.png
 ```
 
-This creates a task that runs every 15 minutes, so `Invoke-Lumos` can re-check the current sunrise/sunset for your locale and switch the theme when needed. The task runs as your own (non-administrator) user account.
+If you'd rather not have Lumos look up your location, you can specify fixed daily times yourself with `-Sunrise`/`-Sunset`, or reuse whatever schedule Windows' own Night Light feature (Settings > System > Display > Night light) is already configured with via `-FromNightLight`. Since neither of these needs to be kept in sync with the season, the "Lumos-Maintenance" task isn't registered in either case - re-run the cmdlet if you want to pick up a later change:
+
+```PowerShell
+Register-LumosScheduledTask -Sunrise '07:00' -Sunset '19:00'
+
+Register-LumosScheduledTask -FromNightLight
+```
+
+`Register-LumosScheduledTask` returns the scheduled task(s) it registered, showing the source and times that were used, so you can confirm what was set up:
+
+```
+TaskName           Source       Schedule                           State
+--------           ------       --------                           -----
+Lumos              Location     Light 07:00, Dark 19:00            Ready
+Lumos-Maintenance  Location     Weekly Wednesday 13:00             Ready
+```
