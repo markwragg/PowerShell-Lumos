@@ -62,6 +62,19 @@ Function Register-LumosScheduledTask {
         return
     }
 
+    # Runs the task using whichever PowerShell edition is currently running this cmdlet, since that's the
+    # edition Lumos is guaranteed to be installed under - PS Core and Windows PowerShell have separate
+    # module paths, so hardcoding the other edition's executable would fail to find Invoke-Lumos. $PSHOME
+    # is the home directory of the CURRENT session, so this resolves to an exact, unambiguous full path
+    # rather than relying on whatever "powershell.exe"/"pwsh.exe" happens to resolve to on PATH.
+    $PowerShellExe = if ($PSVersionTable.PSEdition -eq 'Core') {
+        Join-Path -Path $PSHOME -ChildPath 'pwsh.exe'
+    }
+    else {
+        Join-Path -Path $PSHOME -ChildPath 'powershell.exe'
+    }
+
+    # -WindowStyle Hidden keeps the task running silently in the background with no visible console window.
     $ArgumentDefaults = '-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden'
 
     $LumosArgument = "$ArgumentDefaults -Command Invoke-Lumos"
@@ -82,7 +95,7 @@ Function Register-LumosScheduledTask {
         $LumosArgument = $LumosArgument + " -DarkWallpaper '$DarkWallpaper'"
     }
 
-    $LumosAction = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument $LumosArgument
+    $LumosAction = New-ScheduledTaskAction -Execute $PowerShellExe -Argument $LumosArgument
     $Principal = New-ScheduledTaskPrincipal -UserId $env:USERNAME -LogonType Interactive
     $TaskSettings = New-ScheduledTaskSettingsSet -StartWhenAvailable
 

@@ -1,5 +1,9 @@
 # Change Log
 
+## !Deploy
+
+* [BugFix] `Register-LumosScheduledTask` now runs the scheduled task using whichever PowerShell edition (Core or Windows PowerShell) is currently running the cmdlet, instead of always hardcoding `powershell.exe`. Previously, if Lumos was only installed under PowerShell Core, the scheduled task would fail since Windows PowerShell can't see modules installed to the Core-only module path.
+
 ## [2.0.1] - 2026-09-24
 
 * [BugFix] `Invoke-Lumos -IncludeOfficeProPlus` no longer throws a `ParameterBindingException` when a signed-in Office identity is found, caused by a `Write-Verbose` call passing it two positional arguments instead of one interpolated string.
