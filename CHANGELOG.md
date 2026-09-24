@@ -1,5 +1,9 @@
 # Change Log
 
+## !Deploy
+
+* [BugFix] `Invoke-Lumos -IncludeOfficeProPlus` no longer throws a `ParameterBindingException` when a signed-in Office identity is found, caused by a `Write-Verbose` call passing it two positional arguments instead of one interpolated string.
+
 ## [2.0.0] - 2026-09-24
 
 * [BugFix] `Get-UserLocation` now determines location via IP-address geolocation instead of the Windows Location Service, which routinely denies permission when Lumos is run from a Scheduled Task - causing sunrise/sunset auto-detection to fail silently.
