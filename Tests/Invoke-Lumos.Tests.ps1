@@ -519,6 +519,31 @@ Describe "Invoke-Lumos PS$PSVersion" {
             }
         }
 
+        Context 'Invoke-Lumos on MacOS with a PowerShell version older than 7.3' {
+
+            BeforeEach {
+                Set-Variable -Name 'IsMacOS' -Value $true -Force -Scope Script
+
+                # Shadows the automatic $PSVersionTable variable at the module's own script scope (we're
+                # inside InModuleScope), so Invoke-Lumos's version check sees an old version without
+                # touching the real, global $PSVersionTable that Pester and everything else relies on.
+                Set-Variable -Name 'PSVersionTable' -Value @{ PSVersion = [Version]'7.2' } -Force -Scope Script
+            }
+
+            AfterEach {
+                Remove-Variable -Name 'PSVersionTable' -Force -Scope Script -ErrorAction SilentlyContinue
+            }
+
+            It 'Should throw, since older PowerShell versions pass the AppleScript commands through incorrectly' {
+                { Invoke-Lumos -Dark } | Should -Throw 'Lumos requires PowerShell 7.3 or later on MacOS*'
+            }
+
+            It 'Should not call AppleScript' {
+                { Invoke-Lumos -Dark } | Should -Throw
+                Should -Invoke Invoke-AppleScript -Times 0 -Exactly
+            }
+        }
+
         Context 'Invoke-Lumos -Dark on MacOS' {
 
             BeforeEach {
@@ -537,7 +562,7 @@ Describe "Invoke-Lumos PS$PSVersion" {
 
             It 'Should switch to dark mode via AppleScript' {
                 Should -Invoke Invoke-AppleScript -Times 1 -Exactly -ParameterFilter {
-                    $Command -eq 'tell application \"System Events\" to tell appearance preferences to set dark mode to true'
+                    $Command -eq 'tell application "System Events" to tell appearance preferences to set dark mode to true'
                 }
             }
 
@@ -561,7 +586,7 @@ Describe "Invoke-Lumos PS$PSVersion" {
 
             It 'Should switch to light mode via AppleScript' {
                 Should -Invoke Invoke-AppleScript -Times 1 -Exactly -ParameterFilter {
-                    $Command -eq 'tell application \"System Events\" to tell appearance preferences to set dark mode to false'
+                    $Command -eq 'tell application "System Events" to tell appearance preferences to set dark mode to false'
                 }
             }
         }
@@ -580,7 +605,7 @@ Describe "Invoke-Lumos PS$PSVersion" {
 
             It 'Should toggle whichever mode is not currently active' {
                 Should -Invoke Invoke-AppleScript -Times 1 -Exactly -ParameterFilter {
-                    $Command -eq 'tell application \"System Events\" to tell appearance preferences to set dark mode to not dark mode'
+                    $Command -eq 'tell application "System Events" to tell appearance preferences to set dark mode to not dark mode'
                 }
             }
         }
@@ -599,7 +624,7 @@ Describe "Invoke-Lumos PS$PSVersion" {
 
             It 'Should set the wallpaper via AppleScript' {
                 Should -Invoke Invoke-AppleScript -Times 1 -Exactly -ParameterFilter {
-                    $Command -eq 'tell application \"System Events\" to tell current desktop to set picture to \"c:\some\wallpaper.png\"'
+                    $Command -eq 'tell application "System Events" to tell current desktop to set picture to "c:\some\wallpaper.png"'
                 }
             }
 

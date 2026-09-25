@@ -139,14 +139,18 @@ Function Invoke-Lumos {
 
     if ($IsMacOS) {
         ### MacOS ###
+        if ($PSVersionTable.PSVersion -lt [Version]'7.3') {
+            Throw 'Lumos requires PowerShell 7.3 or later on MacOS, since older versions pass the AppleScript commands used to change the theme/wallpaper through incorrectly.'
+        }
+
         $MacCommand = if ($Lumos -eq 0) {
-            'tell application \"System Events\" to tell appearance preferences to set dark mode to true'
+            'tell application "System Events" to tell appearance preferences to set dark mode to true'
         }
         elseif ($Lumos -eq 1) {
-            'tell application \"System Events\" to tell appearance preferences to set dark mode to false'
+            'tell application "System Events" to tell appearance preferences to set dark mode to false'
         }
         else {
-            'tell application \"System Events\" to tell appearance preferences to set dark mode to not dark mode'
+            'tell application "System Events" to tell appearance preferences to set dark mode to not dark mode'
         }
 
         Invoke-AppleScript -Command $MacCommand
@@ -164,7 +168,7 @@ Function Invoke-Lumos {
         }
 
         if ($Wallpaper) {
-            $MacCommand = "tell application \`"System Events\`" to tell current desktop to set picture to \`"$Wallpaper\`""
+            $MacCommand = "tell application `"System Events`" to tell current desktop to set picture to `"$Wallpaper`""
             Invoke-AppleScript -Command $MacCommand
         }
     }
