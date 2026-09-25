@@ -4,7 +4,7 @@ Function Invoke-Lumos {
             Sets the Windows or Mac Theme to light or dark mode dependent on time of day.
 
         .DESCRIPTION
-            Use this cmdlet to change the theme on Windows 10 or MacOS Mojave to the light of dark themes,
+            Use this cmdlet to change the theme on Windows 10/11 or macOS to the light of dark themes,
             either as specified by parameters or (for Windows only), automatically based on the local time
             of day and whether it is before or after sunrise/sunset.
 

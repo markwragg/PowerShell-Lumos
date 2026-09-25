@@ -378,6 +378,30 @@ Describe "Register-LumosScheduledTask PS$PSVersion" -Skip:(-not $IsWindowsPlatfo
 
         }
 
+        Context 'Register-LumosScheduledTask under Windows PowerShell (Desktop edition)' {
+
+            BeforeEach {
+                # Shadows the automatic $PSVersionTable variable at the module's own script scope, so
+                # Register-LumosScheduledTask's edition check (which reads $PSVersionTable from its
+                # lexical parent - the module, not this test file) sees 'Desktop' without touching the
+                # real, global $PSVersionTable that Pester and everything else in this session relies on.
+                Set-Variable -Name 'PSVersionTable' -Value @{ PSEdition = 'Desktop'; PSVersion = $PSVersionTable.PSVersion } -Force -Scope Script
+
+                Register-LumosScheduledTask
+            }
+
+            AfterEach {
+                Remove-Variable -Name 'PSVersionTable' -Force -Scope Script -ErrorAction SilentlyContinue
+            }
+
+            It 'Should use powershell.exe rather than pwsh.exe' {
+                Should -Invoke Register-ScheduledTask -Times 1 -Exactly -ParameterFilter {
+                    $TaskName -eq 'Lumos' -and
+                    ($InputObject.Actions.Execute -contains (Join-Path -Path $PSHOME -ChildPath 'powershell.exe'))
+                }
+            }
+        }
+
         Context 'Register-LumosScheduledTask on a non-Windows OS' -Skip:($PSVersionTable.PSEdition -eq 'Desktop') {
 
             BeforeEach {
