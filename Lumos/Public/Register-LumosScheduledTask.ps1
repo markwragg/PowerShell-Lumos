@@ -38,6 +38,14 @@ Function Register-LumosScheduledTask {
             lookup picked up what you expected) - the full underlying task, including its Triggers, is still
             there to inspect if you need more detail.
 
+            If PowerShell 7 is installed from the Microsoft Store, its exact path changes with every update
+            (it lives in a version-specific folder under WindowsApps), which would otherwise leave the
+            registered task pointing at a pwsh.exe that no longer exists after the next update. In that case
+            this instead points the task at Windows' own stable app-execution-alias for pwsh.exe, which
+            Windows keeps up to date across Store updates - so re-running this cmdlet after updating
+            PowerShell shouldn't be necessary. This doesn't apply to Windows PowerShell or a traditionally
+            installed PowerShell 7, both of which already have a stable path.
+
         .PARAMETER Sunrise
             Specify a fixed daily time to switch to the Light theme, instead of automatically looking up the
             current sunrise for your location. Must be specified together with -Sunset. Since this time won't
@@ -142,9 +150,27 @@ Function Register-LumosScheduledTask {
     # edition Lumos is guaranteed to be installed under - PS Core and Windows PowerShell have separate
     # module paths, so hardcoding the other edition's executable would fail to find Invoke-Lumos. $PSHOME
     # is the home directory of the CURRENT session, so this resolves to an exact, unambiguous full path
-    # rather than relying on whatever "powershell.exe"/"pwsh.exe" happens to resolve to on PATH.
+    # rather than relying on whatever "powershell.exe"/"pwsh.exe" happens to resolve to on PATH - Task
+    # Scheduler doesn't search PATH for a bare executable name the way an interactively typed command does.
     $PowerShellExe = if ($PSVersionTable.PSEdition -eq 'Core') {
-        Join-Path -Path $PSHOME -ChildPath 'pwsh.exe'
+        $PSHomeExe = Join-Path -Path $PSHOME -ChildPath 'pwsh.exe'
+
+        # A Microsoft Store (MSIX) install of PowerShell lives in a folder that bakes in its exact version
+        # (...\WindowsApps\Microsoft.PowerShell_7.6.6.0_...) and gets removed on update, unlike a
+        # traditional installer's stable "Program Files\PowerShell\7" - so a task registered against that
+        # exact $PSHOME path would stop working after the next Store update, since Task Scheduler just
+        # launches whatever literal path it was given rather than re-resolving it on each run. Windows
+        # keeps a stable app-execution-alias stub for it at this fixed, version-independent path instead -
+        # prefer that one, but only in this specific case, so every other install method (including the
+        # MSI installer's own stable path) is unaffected.
+        $StableAliasExe = Join-Path -Path $env:LOCALAPPDATA -ChildPath 'Microsoft\WindowsApps\pwsh.exe'
+
+        if ($PSHomeExe -like '*\WindowsApps\*' -and (Test-Path -Path $StableAliasExe)) {
+            $StableAliasExe
+        }
+        else {
+            $PSHomeExe
+        }
     }
     else {
         Join-Path -Path $PSHOME -ChildPath 'powershell.exe'

@@ -4,6 +4,7 @@
 
 * [Breaking] `Invoke-Lumos` with no switches now toggles to whichever theme isn't currently active on Windows, instead of automatically picking Dark/Light based on your location and time of day. This matches the existing macOS behavior. Added a new `-Auto` switch to `Invoke-Lumos` to get the previous automatic, location/time-based behavior back on either platform.
 * [Feature] `Register-LumosScheduledTask` now always includes `-Auto` when scheduling `Invoke-Lumos`, since the task relies on independent location/time-based detection at each of its sunrise/sunset triggers rather than toggling. If you previously registered the scheduled task, re-run `Register-LumosScheduledTask` to pick up this change.
+* [BugFix] `Register-LumosScheduledTask` no longer points a PowerShell 7 scheduled task at a path that breaks on the next update, if PowerShell was installed from the Microsoft Store. Store installs live in a version-specific folder that gets removed on update; the task now points at Windows' own stable app-execution-alias for `pwsh.exe` in that case instead, which Windows keeps current across updates. Traditionally installed PowerShell 7 and Windows PowerShell are unaffected, since both already have a stable path.
 
 ## [3.0.0] - 2026-09-24
 

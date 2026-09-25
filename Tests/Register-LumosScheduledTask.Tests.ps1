@@ -52,11 +52,20 @@ Describe "Register-LumosScheduledTask PS$PSVersion" -Skip:(-not $IsWindowsPlatfo
                 }
             }
 
-            # Mirrors Register-LumosScheduledTask's own executable-selection logic, so tests assert against
-            # whichever edition (PS Core vs Windows PowerShell) is actually running them, rather than a
-            # hardcoded 'powershell.exe' that would only match on one of the two editions CI runs this in.
+            # Mirrors Register-LumosScheduledTask's own executable-selection logic (including the
+            # WindowsApps-alias substitution below), so tests assert against whichever edition/install this
+            # is actually running under, rather than assuming a hardcoded path that would only be correct
+            # for one specific combination of edition and install method.
             $Script:ExpectedPowerShellExe = if ($PSVersionTable.PSEdition -eq 'Core') {
-                Join-Path -Path $PSHOME -ChildPath 'pwsh.exe'
+                $PSHomeExe = Join-Path -Path $PSHOME -ChildPath 'pwsh.exe'
+                $StableAliasExe = Join-Path -Path $env:LOCALAPPDATA -ChildPath 'Microsoft\WindowsApps\pwsh.exe'
+
+                if ($PSHomeExe -like '*\WindowsApps\*' -and (Test-Path -Path $StableAliasExe)) {
+                    $StableAliasExe
+                }
+                else {
+                    $PSHomeExe
+                }
             }
             else {
                 Join-Path -Path $PSHOME -ChildPath 'powershell.exe'
@@ -376,6 +385,85 @@ Describe "Register-LumosScheduledTask PS$PSVersion" -Skip:(-not $IsWindowsPlatfo
                 }
             }
 
+        }
+
+        Context 'Register-LumosScheduledTask under PowerShell Core installed via the Microsoft Store (MSIX)' {
+
+            BeforeEach {
+                # Shadows both variables at the module's own script scope - see the Desktop edition context
+                # below for why this reaches Register-LumosScheduledTask's own lexical scope without
+                # touching the real, global $PSVersionTable/$PSHOME the rest of this session relies on.
+                Set-Variable -Name 'PSVersionTable' -Value @{ PSEdition = 'Core'; PSVersion = $PSVersionTable.PSVersion } -Force -Scope Script
+                Set-Variable -Name 'PSHOME' -Value 'C:\Program Files\WindowsApps\Microsoft.PowerShell_7.6.6.0_arm64__8wekyb3d8bbwe' -Force -Scope Script
+
+                Mock Test-Path { $true } -ParameterFilter {
+                    $Path -eq (Join-Path -Path $env:LOCALAPPDATA -ChildPath 'Microsoft\WindowsApps\pwsh.exe')
+                }
+
+                Register-LumosScheduledTask
+            }
+
+            AfterEach {
+                Remove-Variable -Name 'PSVersionTable' -Force -Scope Script -ErrorAction SilentlyContinue
+                Remove-Variable -Name 'PSHOME' -Force -Scope Script -ErrorAction SilentlyContinue
+            }
+
+            It 'Should use the stable WindowsApps alias path instead of the versioned $PSHOME path' {
+                Should -Invoke Register-ScheduledTask -Times 1 -Exactly -ParameterFilter {
+                    $TaskName -eq 'Lumos' -and
+                    ($InputObject.Actions.Execute -contains (Join-Path -Path $env:LOCALAPPDATA -ChildPath 'Microsoft\WindowsApps\pwsh.exe'))
+                }
+            }
+        }
+
+        Context 'Register-LumosScheduledTask under the Microsoft Store (MSIX), without the stable alias available' {
+
+            BeforeEach {
+                Set-Variable -Name 'PSVersionTable' -Value @{ PSEdition = 'Core'; PSVersion = $PSVersionTable.PSVersion } -Force -Scope Script
+                Set-Variable -Name 'PSHOME' -Value 'C:\Program Files\WindowsApps\Microsoft.PowerShell_7.6.6.0_arm64__8wekyb3d8bbwe' -Force -Scope Script
+
+                # e.g. the user has disabled this specific app-execution-alias under Settings > Apps >
+                # Advanced app settings > App execution aliases.
+                Mock Test-Path { $false } -ParameterFilter {
+                    $Path -eq (Join-Path -Path $env:LOCALAPPDATA -ChildPath 'Microsoft\WindowsApps\pwsh.exe')
+                }
+
+                Register-LumosScheduledTask
+            }
+
+            AfterEach {
+                Remove-Variable -Name 'PSVersionTable' -Force -Scope Script -ErrorAction SilentlyContinue
+                Remove-Variable -Name 'PSHOME' -Force -Scope Script -ErrorAction SilentlyContinue
+            }
+
+            It 'Should fall back to the versioned $PSHOME path' {
+                Should -Invoke Register-ScheduledTask -Times 1 -Exactly -ParameterFilter {
+                    $TaskName -eq 'Lumos' -and
+                    ($InputObject.Actions.Execute -contains (Join-Path -Path 'C:\Program Files\WindowsApps\Microsoft.PowerShell_7.6.6.0_arm64__8wekyb3d8bbwe' -ChildPath 'pwsh.exe'))
+                }
+            }
+        }
+
+        Context 'Register-LumosScheduledTask under PowerShell Core installed via a traditional installer' {
+
+            BeforeEach {
+                Set-Variable -Name 'PSVersionTable' -Value @{ PSEdition = 'Core'; PSVersion = $PSVersionTable.PSVersion } -Force -Scope Script
+                Set-Variable -Name 'PSHOME' -Value 'C:\Program Files\PowerShell\7' -Force -Scope Script
+
+                Register-LumosScheduledTask
+            }
+
+            AfterEach {
+                Remove-Variable -Name 'PSVersionTable' -Force -Scope Script -ErrorAction SilentlyContinue
+                Remove-Variable -Name 'PSHOME' -Force -Scope Script -ErrorAction SilentlyContinue
+            }
+
+            It 'Should use pwsh.exe from $PSHOME directly, without substituting the WindowsApps alias' {
+                Should -Invoke Register-ScheduledTask -Times 1 -Exactly -ParameterFilter {
+                    $TaskName -eq 'Lumos' -and
+                    ($InputObject.Actions.Execute -contains (Join-Path -Path 'C:\Program Files\PowerShell\7' -ChildPath 'pwsh.exe'))
+                }
+            }
         }
 
         Context 'Register-LumosScheduledTask under Windows PowerShell (Desktop edition)' {
