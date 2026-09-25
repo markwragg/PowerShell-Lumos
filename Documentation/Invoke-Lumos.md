@@ -7,14 +7,14 @@ Sets the Windows or Mac Theme to light or dark mode dependent on time of day.
 
 ### Dark (Default)
 ```
-Invoke-Lumos [-Dark] [-ExcludeSystem] [-IncludeOfficeProPlus] [-ExcludeApps] [-DarkWallpaper <String>]
- [-LightWallpaper <String>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Invoke-Lumos [-Dark] [-ExcludeSystem] [-RestartExplorer] [-IncludeOfficeProPlus] [-ExcludeApps]
+ [-DarkWallpaper <String>] [-LightWallpaper <String>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Light
 ```
-Invoke-Lumos [-Light] [-ExcludeSystem] [-IncludeOfficeProPlus] [-ExcludeApps] [-DarkWallpaper <String>]
- [-LightWallpaper <String>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Invoke-Lumos [-Light] [-ExcludeSystem] [-RestartExplorer] [-IncludeOfficeProPlus] [-ExcludeApps]
+ [-DarkWallpaper <String>] [-LightWallpaper <String>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -47,6 +47,14 @@ Switches the OS theme to Dark, but (on Windows only) does not change the theme o
 Dark/Light theme.
 
 ### EXAMPLE 4
+```
+Invoke-Lumos -Dark -RestartExplorer
+```
+
+Switches the OS theme to Dark and restarts Explorer (Windows only) to apply the change to the
+taskbar, instead of the default of broadcasting a WM_SETTINGCHANGE message.
+
+### EXAMPLE 5
 ```
 Invoke-Lumos
 ```
@@ -88,6 +96,24 @@ Accept wildcard characters: False
 
 ### -ExcludeSystem
 Exclude changing the System theme when switching to Dark/Light (Windows only).
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -RestartExplorer
+Restart Explorer to apply the System theme change to the taskbar (Windows only), instead of the
+default of broadcasting a WM_SETTINGCHANGE message.
+Use this if the taskbar still doesn't update
+without it on your system.
 
 ```yaml
 Type: SwitchParameter

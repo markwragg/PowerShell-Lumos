@@ -1,6 +1,6 @@
 # Change Log
 
-## !Deploy
+## [3.0.0] - 2026-09-24
 
 * [BugFix] `Register-LumosScheduledTask` now runs the scheduled task using whichever PowerShell edition (Core or Windows PowerShell) is currently running the cmdlet, instead of always hardcoding `powershell.exe`. Previously, if Lumos was only installed under PowerShell Core, the scheduled task would fail since Windows PowerShell can't see modules installed to the Core-only module path.
 * [Feature] `Register-LumosScheduledTask` now runs `Invoke-Lumos` at two fixed daily triggers (sunrise and sunset) instead of every 15 minutes. Re-adds `Update-LumosScheduledTask`, which keeps those trigger times aligned with sunrise/sunset as they drift through the year - this time registered as its own separate "Lumos-Maintenance" task (run once weekly, at solar noon) rather than as a second action of the "Lumos" task itself.
