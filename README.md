@@ -4,6 +4,11 @@
 
 A PowerShell module for switching Windows 10/11 and macOS between light and dark themes depending on whether it is day or night.
 
+> [!WARNING]
+> **Breaking change for Windows users:** Running `Invoke-Lumos` with no switches used to automatically pick Dark/Light based on your location and time of day on Windows. It now toggles to the opposite of whatever theme is currently active instead (matching the existing macOS behavior). Use the new `-Auto` switch to get the old automatic behavior back.
+>
+> If you previously ran `Register-LumosScheduledTask`, **re-run it** to re-create the scheduled task - the existing task was created using the old default behavior and won't pick up `-Auto` on its own.
+
 __Windows:__
 
 <img src="https://github.com/markwragg/PowerShell-Lumos/raw/master/assets/Invoke-Lumos-Windows.gif" data-canonical-src="https://gyazo.com/eb5c5741b6a9a16c692170a41a49c858.png" width="600" />
@@ -26,11 +31,7 @@ You can manually trigger Lumos as follows:
 Invoke-Lumos
 ```
 
-On Windows, this will get your geographical coordinates from your local system and then use these to query a web API for the sunrise and sunset times for your location.
-If the sun is down, the theme will be set to dark.
-If the sun is up, the theme will be set to light.
-
-On macOS, using `Invoke-Lumos` with no switches will switch the theme to its alternate, i.e if it's Light it will switch to Dark and if Dark switch to Light.
+On both Windows and macOS, using `Invoke-Lumos` with no switches will switch the theme to its alternate, i.e. if it's Light it will switch to Dark and if Dark switch to Light.
 
 You can also simply use the alias `Lumos`.
 
@@ -41,6 +42,14 @@ Invoke-Lumos -Dark
 
 Invoke-Lumos -Light
 ```
+
+Or you can have Lumos decide automatically, based on your location (determined from your public IP address) and whether it is currently before or after sunrise/sunset there:
+
+```PowerShell
+Invoke-Lumos -Auto
+```
+
+If the sun is down, the theme will be set to dark. If the sun is up, the theme will be set to light. `-Auto` works the same way on both Windows and macOS.
 
 By default the cmdlet will change both the System and Application themes, but on Windows 10/11 if you'd like to just change one of these you can exclude the other by using these switches:
 

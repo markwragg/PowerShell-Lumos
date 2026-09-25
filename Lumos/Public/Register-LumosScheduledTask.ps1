@@ -160,7 +160,10 @@ Function Register-LumosScheduledTask {
     $ModulePath = (Get-Module -Name 'Lumos').Path
     $ImportModuleCommand = "Import-Module '$ModulePath' -Force; "
 
-    $LumosArgument = "$ArgumentDefaults -Command ${ImportModuleCommand}Invoke-Lumos"
+    # -Auto makes Invoke-Lumos independently decide Dark vs Light based on live location/time each time the
+    # task fires, rather than toggling - needed since both the sunrise and sunset triggers below run this
+    # exact same action, and toggling would desync from reality if a run is ever missed or run out of order.
+    $LumosArgument = "$ArgumentDefaults -Command ${ImportModuleCommand}Invoke-Lumos -Auto"
 
     If ($ExcludeSystem) {
         $LumosArgument = $LumosArgument + " -ExcludeSystem"

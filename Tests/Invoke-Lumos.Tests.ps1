@@ -247,7 +247,7 @@ Describe "Invoke-Lumos PS$PSVersion" {
         }
 
 
-        Context 'Invoke-Lumos when it is currently daytime' {
+        Context 'Invoke-Lumos -Auto when it is currently daytime' {
 
             BeforeEach {
                 # Get-LocalDaylight calls a live external API (sunrise-sunset.org) - mocking it here avoids
@@ -260,7 +260,7 @@ Describe "Invoke-Lumos PS$PSVersion" {
                     }
                 }
 
-                $InvokeLumos = Invoke-Lumos
+                $InvokeLumos = Invoke-Lumos -Auto
             }
 
             It 'Should return null' {
@@ -291,7 +291,7 @@ Describe "Invoke-Lumos PS$PSVersion" {
             }
         }
 
-        Context 'Invoke-Lumos when it is currently night' {
+        Context 'Invoke-Lumos -Auto when it is currently night' {
 
             BeforeEach {
                 Mock Get-LocalDaylight {
@@ -301,7 +301,7 @@ Describe "Invoke-Lumos PS$PSVersion" {
                     }
                 }
 
-                $InvokeLumos = Invoke-Lumos
+                $InvokeLumos = Invoke-Lumos -Auto
             }
 
             It 'Should return null' {
@@ -315,16 +315,70 @@ Describe "Invoke-Lumos PS$PSVersion" {
             }
         }
 
-        Context 'Invoke-Lumos with Get-UserLocation returning null' {
+        Context 'Invoke-Lumos -Auto with Get-UserLocation returning null' {
 
             BeforeAll {
                 Mock Get-UserLocation {}
             }
 
             It 'Should throw "Could not get sunrise/sunset data for the current user and call Get-UserLocation 1 time"' {
-                { Invoke-Lumos } | Should -Throw 'Could not get sunrise/sunset data for the current user.'
+                { Invoke-Lumos -Auto } | Should -Throw 'Could not get sunrise/sunset data for the current user.'
 
                 Should -Invoke Get-UserLocation -Times 1 -Exactly
+            }
+        }
+
+        Context 'Invoke-Lumos with no switches, when the System theme is currently Dark' {
+
+            BeforeEach {
+                Mock Get-ItemProperty {
+                    [pscustomobject]@{
+                        SystemUsesLightTheme = 0
+                        AppsUseLightTheme    = 0
+                    }
+                } -ParameterFilter { $Name -eq 'SystemUsesLightTheme' -or $Name -eq 'AppsUseLightTheme' }
+
+                $InvokeLumos = Invoke-Lumos
+            }
+
+            It 'Should return null' {
+                $InvokeLumos | Should -Be $null
+            }
+
+            It 'Should not look up the user location' {
+                Should -Invoke Get-UserLocation -Times 0 -Exactly
+            }
+
+            It 'Should toggle to the Light theme, since Dark is currently active' {
+                Should -Invoke Set-ItemProperty -Times 1 -Exactly -ParameterFilter {
+                    $Name -eq 'SystemUsesLightTheme' -and $Value -eq 1
+                }
+                Should -Invoke Set-ItemProperty -Times 1 -Exactly -ParameterFilter {
+                    $Name -eq 'AppsUseLightTheme' -and $Value -eq 1
+                }
+            }
+        }
+
+        Context 'Invoke-Lumos with no switches, when the System theme is currently Light' {
+
+            BeforeEach {
+                Mock Get-ItemProperty {
+                    [pscustomobject]@{
+                        SystemUsesLightTheme = 1
+                        AppsUseLightTheme    = 1
+                    }
+                } -ParameterFilter { $Name -eq 'SystemUsesLightTheme' -or $Name -eq 'AppsUseLightTheme' }
+
+                $InvokeLumos = Invoke-Lumos
+            }
+
+            It 'Should toggle to the Dark theme, since Light is currently active' {
+                Should -Invoke Set-ItemProperty -Times 1 -Exactly -ParameterFilter {
+                    $Name -eq 'SystemUsesLightTheme' -and $Value -eq 0
+                }
+                Should -Invoke Set-ItemProperty -Times 1 -Exactly -ParameterFilter {
+                    $Name -eq 'AppsUseLightTheme' -and $Value -eq 0
+                }
             }
         }
 

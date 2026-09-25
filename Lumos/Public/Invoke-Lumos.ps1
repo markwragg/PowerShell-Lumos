@@ -1,18 +1,23 @@
 Function Invoke-Lumos {
     <#
         .SYNOPSIS
-            Sets the Windows or Mac Theme to light or dark mode dependent on time of day.
+            Sets the Windows or Mac Theme to light or dark mode.
 
         .DESCRIPTION
-            Use this cmdlet to change the theme on Windows 10/11 or macOS to the light of dark themes,
-            either as specified by parameters or (for Windows only), automatically based on the local time
-            of day and whether it is before or after sunrise/sunset.
+            Use this cmdlet to change the theme on Windows 10/11 or macOS to the light or dark theme,
+            either as specified by parameters, automatically based on your location and whether it is
+            currently before or after sunrise/sunset (-Auto), or (if none of those are specified) by
+            toggling to whichever theme isn't currently active.
 
         .PARAMETER Dark
             Switch to the Dark OS theme.
 
         .PARAMETER Light
             Switch to the Light OS theme.
+
+        .PARAMETER Auto
+            Switch to the Dark or Light OS theme automatically, based on your current location (determined
+            via your public IP address) and whether it is currently before or after sunrise/sunset there.
 
         .PARAMETER ExcludeSystem
             Exclude changing the System theme when switching to Dark/Light (Windows only).
@@ -57,10 +62,15 @@ Function Invoke-Lumos {
             taskbar, instead of the default of broadcasting a WM_SETTINGCHANGE message.
 
         .Example
+            Invoke-Lumos -Auto
+
+            Switches to either the Dark or Light theme, dependent on your current location and time of day.
+
+        .Example
             Invoke-Lumos
 
-            On Windows: Switches to either Dark or Light theme dependent on your current location/time of day.
-            On MacOS: Switches current theme from either Light to Dark or Dark to Light.
+            Switches the current theme to its alternate, i.e. if it's Light it will switch to Dark and if
+            Dark switch to Light.
     #>
     [cmdletbinding(DefaultParameterSetName = 'Dark')]
     Param(
@@ -71,6 +81,10 @@ Function Invoke-Lumos {
         [Parameter(ParameterSetName = 'Light')]
         [switch]
         $Light,
+
+        [Parameter(ParameterSetName = 'Auto')]
+        [switch]
+        $Auto,
 
         [switch]
         $ExcludeSystem,
@@ -97,14 +111,7 @@ Function Invoke-Lumos {
     elseif ($Light) {
         $Lumos = 1
     }
-    elseif ($IsMacOS) {
-        ### MacOS ###
-
-        # Leaving Lumos as undefined on MacOS will make it just alternate to whatever mode it currently is not
-        $Lumos = 'Undefined'
-    }
-    else {
-        ### Windows ###
+    elseif ($Auto) {
         $CurrentTime = Get-Date
         $UserLocation = Get-UserLocation
 
@@ -121,6 +128,10 @@ Function Invoke-Lumos {
         else {
             $Lumos = 0
         }
+    }
+    else {
+        # Leaving Lumos as undefined will make it just alternate to whatever mode it currently is not
+        $Lumos = 'Undefined'
     }
 
     Switch ($Lumos) {
@@ -181,9 +192,16 @@ Function Invoke-Lumos {
         $ThemeRegKey = 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize'
         $OfficeThemeRegKey = 'HKCU:\Software\Microsoft\Office\16.0\Common'
 
-        if (-not $ExcludeSystem) {
-            $CurrentSystemTheme = (Get-ItemProperty -Path $ThemeRegKey -Name 'SystemUsesLightTheme' -ErrorAction SilentlyContinue).SystemUsesLightTheme
+        $CurrentSystemTheme = (Get-ItemProperty -Path $ThemeRegKey -Name 'SystemUsesLightTheme' -ErrorAction SilentlyContinue).SystemUsesLightTheme
 
+        if ($Lumos -eq 'Undefined') {
+            # No -Dark/-Light/-Auto specified: toggle to whichever theme isn't currently active, mirroring
+            # the behaviour of the MacOS "not dark mode" AppleScript command further down.
+            $Lumos = [int](-not [bool]$CurrentSystemTheme)
+            $Status = if ($Lumos -eq 1) { 'Light' } else { 'Dark' }
+        }
+
+        if (-not $ExcludeSystem) {
             if ($CurrentSystemTheme -ne $Lumos) {
                 Write-Verbose "Setting System to $Status Theme.."
                 Set-ItemProperty -Path $ThemeRegKey -Name 'SystemUsesLightTheme' -Value $Lumos

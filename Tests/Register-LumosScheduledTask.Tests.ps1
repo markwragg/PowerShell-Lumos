@@ -372,7 +372,7 @@ Describe "Register-LumosScheduledTask PS$PSVersion" -Skip:(-not $IsWindowsPlatfo
                         Where-Object { $_.Arguments -like '*Invoke-Lumos*' }).Arguments
 
                     $TaskName -eq 'Lumos' -and
-                    $LumosArgument -eq "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -Command Import-Module '$Script:ExpectedModulePath' -Force; Invoke-Lumos"
+                    $LumosArgument -eq "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -Command Import-Module '$Script:ExpectedModulePath' -Force; Invoke-Lumos -Auto"
                 }
             }
 
