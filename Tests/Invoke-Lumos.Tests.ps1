@@ -62,11 +62,19 @@ Describe "Invoke-Lumos PS$PSVersion" {
         BeforeEach {
             Set-Variable -Name 'IsMacOS' -Value $false -Force -Scope Script
             Set-Variable -Name 'IsLinux' -Value $false -Force -Scope Script
+
+            # Also shadows $PSVersionTable with a version safely past the MacOS ">= 7.3" gate below, so the
+            # "on MacOS" contexts pass regardless of which real PowerShell edition/version is actually
+            # running this test file (e.g. Windows PowerShell 5.1, which would otherwise fail that gate for
+            # real). The dedicated "PowerShell version older than 7.3" context overrides this back down in
+            # its own (later-running) BeforeEach to specifically exercise that gate.
+            Set-Variable -Name 'PSVersionTable' -Value @{ PSVersion = [Version]'7.6'; PSEdition = 'Core' } -Force -Scope Script
         }
 
         AfterAll {
             Remove-Variable -Name 'IsMacOS' -Scope Script -Force -ErrorAction SilentlyContinue
             Remove-Variable -Name 'IsLinux' -Scope Script -Force -ErrorAction SilentlyContinue
+            Remove-Variable -Name 'PSVersionTable' -Scope Script -Force -ErrorAction SilentlyContinue
         }
 
         Context 'Invoke-Lumos -Light' {

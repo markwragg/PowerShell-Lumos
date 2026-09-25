@@ -23,9 +23,11 @@ Function Invoke-Lumos {
             Exclude changing the System theme when switching to Dark/Light (Windows only).
 
         .PARAMETER RestartExplorer
-            Restart Explorer to apply the System theme change to the taskbar (Windows only), instead of the
-            default of broadcasting a WM_SETTINGCHANGE message. Use this if the taskbar still doesn't update
-            without it on your system.
+            Restart Explorer to apply the System theme change (Windows only), instead of the default of
+            broadcasting a WM_SETTINGCHANGE/WM_THEMECHANGED message. Use this if the taskbar still doesn't
+            update without it on your system, or if you want any File Explorer windows you already had open
+            to pick up the change too - the broadcast alone reliably updates the taskbar, but not existing
+            Explorer windows' own chrome.
 
         .PARAMETER IncludeOfficeProPlus
             Include changing the theme of Microsoft Office to Dark/Light (Windows only).

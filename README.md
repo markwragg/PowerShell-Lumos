@@ -74,7 +74,7 @@ If you'd like change the theme of your Office ProPlus installation on Windows 10
 Invoke-Lumos -Dark -IncludeOfficeProPlus
 ```
 
-On Windows, when the System theme changes, Lumos applies it to the taskbar by broadcasting a `WM_SETTINGCHANGE` message rather than restarting Explorer. If that doesn't refresh the taskbar on your system, add `-RestartExplorer` to fall back to the old behavior:
+On Windows, when the System theme changes, Lumos applies it to the taskbar by broadcasting the same `WM_SETTINGCHANGE`/`WM_THEMECHANGED` messages Windows' own Settings app sends, rather than restarting Explorer. This reliably updates the taskbar, Start and Action Center, but **not** the chrome of any File Explorer windows you already had open - that appears to be a genuine Windows 11 limitation rather than something Lumos is missing (Microsoft's own PowerToys "Light Switch" module does the same broadcast and has the same [open, unresolved issue](https://github.com/microsoft/PowerToys/issues/42463)). If that bothers you, add `-RestartExplorer` to fall back to restarting Explorer instead, which does pick up existing windows:
 
 ```PowerShell
 Invoke-Lumos -Dark -RestartExplorer

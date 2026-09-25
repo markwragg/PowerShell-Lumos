@@ -390,10 +390,15 @@ Describe "Register-LumosScheduledTask PS$PSVersion" -Skip:(-not $IsWindowsPlatfo
         Context 'Register-LumosScheduledTask under PowerShell Core installed via the Microsoft Store (MSIX)' {
 
             BeforeEach {
-                # Shadows both variables at the module's own script scope - see the Desktop edition context
-                # below for why this reaches Register-LumosScheduledTask's own lexical scope without
-                # touching the real, global $PSVersionTable/$PSHOME the rest of this session relies on.
+                # Shadows these at the module's own script scope - see the Desktop edition context below
+                # for why this reaches Register-LumosScheduledTask's own lexical scope without touching the
+                # real, global versions the rest of this session relies on. $IsWindows also needs shadowing
+                # here: with $PSVersionTable.PSEdition forced to 'Core', the cmdlet's own "is this Windows"
+                # guard falls through to $IsWindows - which doesn't exist as an automatic variable under a
+                # real Windows PowerShell (Desktop) host, so without this these tests would only pass when
+                # actually run under a real PS Core host.
                 Set-Variable -Name 'PSVersionTable' -Value @{ PSEdition = 'Core'; PSVersion = $PSVersionTable.PSVersion } -Force -Scope Script
+                Set-Variable -Name 'IsWindows' -Value $true -Force -Scope Script
                 Set-Variable -Name 'PSHOME' -Value 'C:\Program Files\WindowsApps\Microsoft.PowerShell_7.6.6.0_arm64__8wekyb3d8bbwe' -Force -Scope Script
 
                 Mock Test-Path { $true } -ParameterFilter {
@@ -405,6 +410,7 @@ Describe "Register-LumosScheduledTask PS$PSVersion" -Skip:(-not $IsWindowsPlatfo
 
             AfterEach {
                 Remove-Variable -Name 'PSVersionTable' -Force -Scope Script -ErrorAction SilentlyContinue
+                Remove-Variable -Name 'IsWindows' -Force -Scope Script -ErrorAction SilentlyContinue
                 Remove-Variable -Name 'PSHOME' -Force -Scope Script -ErrorAction SilentlyContinue
             }
 
@@ -420,6 +426,7 @@ Describe "Register-LumosScheduledTask PS$PSVersion" -Skip:(-not $IsWindowsPlatfo
 
             BeforeEach {
                 Set-Variable -Name 'PSVersionTable' -Value @{ PSEdition = 'Core'; PSVersion = $PSVersionTable.PSVersion } -Force -Scope Script
+                Set-Variable -Name 'IsWindows' -Value $true -Force -Scope Script
                 Set-Variable -Name 'PSHOME' -Value 'C:\Program Files\WindowsApps\Microsoft.PowerShell_7.6.6.0_arm64__8wekyb3d8bbwe' -Force -Scope Script
 
                 # e.g. the user has disabled this specific app-execution-alias under Settings > Apps >
@@ -433,6 +440,7 @@ Describe "Register-LumosScheduledTask PS$PSVersion" -Skip:(-not $IsWindowsPlatfo
 
             AfterEach {
                 Remove-Variable -Name 'PSVersionTable' -Force -Scope Script -ErrorAction SilentlyContinue
+                Remove-Variable -Name 'IsWindows' -Force -Scope Script -ErrorAction SilentlyContinue
                 Remove-Variable -Name 'PSHOME' -Force -Scope Script -ErrorAction SilentlyContinue
             }
 
@@ -448,6 +456,7 @@ Describe "Register-LumosScheduledTask PS$PSVersion" -Skip:(-not $IsWindowsPlatfo
 
             BeforeEach {
                 Set-Variable -Name 'PSVersionTable' -Value @{ PSEdition = 'Core'; PSVersion = $PSVersionTable.PSVersion } -Force -Scope Script
+                Set-Variable -Name 'IsWindows' -Value $true -Force -Scope Script
                 Set-Variable -Name 'PSHOME' -Value 'C:\Program Files\PowerShell\7' -Force -Scope Script
 
                 Register-LumosScheduledTask
@@ -455,6 +464,7 @@ Describe "Register-LumosScheduledTask PS$PSVersion" -Skip:(-not $IsWindowsPlatfo
 
             AfterEach {
                 Remove-Variable -Name 'PSVersionTable' -Force -Scope Script -ErrorAction SilentlyContinue
+                Remove-Variable -Name 'IsWindows' -Force -Scope Script -ErrorAction SilentlyContinue
                 Remove-Variable -Name 'PSHOME' -Force -Scope Script -ErrorAction SilentlyContinue
             }
 
