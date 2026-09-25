@@ -52,6 +52,16 @@ to verify -FromNightLight or the automatic sunrise/sunset
 lookup picked up what you expected) - the full underlying task, including its Triggers, is still
 there to inspect if you need more detail.
 
+If PowerShell 7 is installed from the Microsoft Store, its exact path changes with every update
+(it lives in a version-specific folder under WindowsApps), which would otherwise leave the
+registered task pointing at a pwsh.exe that no longer exists after the next update.
+In that case
+this instead points the task at Windows' own stable app-execution-alias for pwsh.exe, which
+Windows keeps up to date across Store updates - so re-running this cmdlet after updating
+PowerShell shouldn't be necessary.
+This doesn't apply to Windows PowerShell or a traditionally
+installed PowerShell 7, both of which already have a stable path.
+
 ## EXAMPLES
 
 ### EXAMPLE 1

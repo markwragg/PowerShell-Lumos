@@ -1,6 +1,6 @@
 # Change Log
 
-## !Deploy
+## [4.0.0] - 2026-09-25
 
 * [Breaking] `Invoke-Lumos` with no switches now toggles to whichever theme isn't currently active on Windows, instead of automatically picking Dark/Light based on your location and time of day. This matches the existing macOS behavior. Added a new `-Auto` switch to `Invoke-Lumos` to get the previous automatic, location/time-based behavior back on either platform.
 * [Feature] `Register-LumosScheduledTask` now always includes `-Auto` when scheduling `Invoke-Lumos`, since the task relies on independent location/time-based detection at each of its sunrise/sunset triggers rather than toggling. If you previously registered the scheduled task, re-run `Register-LumosScheduledTask` to pick up this change.

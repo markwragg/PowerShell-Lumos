@@ -1,7 +1,7 @@
 # Invoke-Lumos
 
 ## SYNOPSIS
-Sets the Windows or Mac Theme to light or dark mode dependent on time of day.
+Sets the Windows or Mac Theme to light or dark mode.
 
 ## SYNTAX
 
@@ -17,10 +17,17 @@ Invoke-Lumos [-Light] [-ExcludeSystem] [-RestartExplorer] [-IncludeOfficeProPlus
  [-DarkWallpaper <String>] [-LightWallpaper <String>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
+### Auto
+```
+Invoke-Lumos [-Auto] [-ExcludeSystem] [-RestartExplorer] [-IncludeOfficeProPlus] [-ExcludeApps]
+ [-DarkWallpaper <String>] [-LightWallpaper <String>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+```
+
 ## DESCRIPTION
-Use this cmdlet to change the theme on Windows 10/11 or macOS to the light of dark themes,
-either as specified by parameters or (for Windows only), automatically based on the local time
-of day and whether it is before or after sunrise/sunset.
+Use this cmdlet to change the theme on Windows 10/11 or macOS to the light or dark theme,
+either as specified by parameters, automatically based on your location and whether it is
+currently before or after sunrise/sunset (-Auto), or (if none of those are specified) by
+toggling to whichever theme isn't currently active.
 
 ## EXAMPLES
 
@@ -56,11 +63,19 @@ taskbar, instead of the default of broadcasting a WM_SETTINGCHANGE message.
 
 ### EXAMPLE 5
 ```
+Invoke-Lumos -Auto
+```
+
+Switches to either the Dark or Light theme, dependent on your current location and time of day.
+
+### EXAMPLE 6
+```
 Invoke-Lumos
 ```
 
-On Windows: Switches to either Dark or Light theme dependent on your current location/time of day.
-On MacOS: Switches current theme from either Light to Dark or Dark to Light.
+Switches the current theme to its alternate, i.e.
+if it's Light it will switch to Dark and if
+Dark switch to Light.
 
 ## PARAMETERS
 
@@ -94,6 +109,22 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -Auto
+Switch to the Dark or Light OS theme automatically, based on your current location (determined
+via your public IP address) and whether it is currently before or after sunrise/sunset there.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: Auto
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -ExcludeSystem
 Exclude changing the System theme when switching to Dark/Light (Windows only).
 
@@ -110,10 +141,12 @@ Accept wildcard characters: False
 ```
 
 ### -RestartExplorer
-Restart Explorer to apply the System theme change to the taskbar (Windows only), instead of the
-default of broadcasting a WM_SETTINGCHANGE message.
-Use this if the taskbar still doesn't update
-without it on your system.
+Restart Explorer to apply the System theme change (Windows only), instead of the default of
+broadcasting a WM_SETTINGCHANGE/WM_THEMECHANGED message.
+Use this if the taskbar still doesn't
+update without it on your system, or if you want any File Explorer windows you already had open
+to pick up the change too - the broadcast alone reliably updates the taskbar, but not existing
+Explorer windows' own chrome.
 
 ```yaml
 Type: SwitchParameter
