@@ -9,9 +9,12 @@
 A PowerShell module for switching Windows 10/11 and macOS between light and dark themes depending on whether it is day or night.
 
 > [!WARNING]
-> **Breaking change for Windows users:** Running `Invoke-Lumos` with no switches used to automatically pick Dark/Light based on your location and time of day on Windows. It now toggles to the opposite of whatever theme is currently active instead (matching the existing macOS behavior). Use the new `-Auto` switch to get the old automatic behavior back.
+> **Breaking change for Windows users:** Lumos version 4.0+: Running `Invoke-Lumos` with no switches used to automatically pick Dark/Light based on your location and time of day on Windows. It now toggles to the opposite of whatever theme is currently active instead (matching the existing macOS behavior). Use the new `-Auto` switch to get the old automatic behavior back.
 >
 > If you previously ran `Register-LumosScheduledTask`, **re-run it** to re-create the scheduled task - the existing task was created using the old default behavior and won't pick up `-Auto` on its own.
+>
+> As of Lumos version 4.1, you can now run `Set-LumosDefault -Auto` to save `-Auto` as the default behaviour
+> for `Invoke-Lumos`.
 
 __Windows:__
 
