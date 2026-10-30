@@ -1,6 +1,6 @@
 # Change Log
 
-## !Deploy 4.1.0
+## [4.1.0] - 2026-10-30
 
 * [Feature] Added `Set-LumosDefault` and `Get-LumosDefault`, to save default values for `Invoke-Lumos`'s `-Auto`, `-ExcludeSystem`, `-RestartExplorer`, `-IncludeOfficeProPlus`, `-ExcludeApps`, `-DarkWallpaper` and `-LightWallpaper` parameters, so they don't need to be specified on every call. Explicitly specifying a parameter always overrides the saved default. Defaults are stored in a `.lumos` folder in the user's home directory, so they survive a module upgrade.
 

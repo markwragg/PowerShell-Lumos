@@ -112,6 +112,7 @@ Accept wildcard characters: False
 ### -Auto
 Switch to the Dark or Light OS theme automatically, based on your current location (determined
 via your public IP address) and whether it is currently before or after sunrise/sunset there.
+Defaults to the value saved with Set-LumosDefault -Auto, if any.
 
 ```yaml
 Type: SwitchParameter
@@ -120,13 +121,15 @@ Aliases:
 
 Required: False
 Position: Named
-Default value: False
+Default value: (Get-LumosDefaultValue -Name 'Auto' -Value $false)
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
 ### -ExcludeSystem
 Exclude changing the System theme when switching to Dark/Light (Windows only).
+Defaults to the
+value saved with Set-LumosDefault -ExcludeSystem, if any.
 
 ```yaml
 Type: SwitchParameter
@@ -135,7 +138,7 @@ Aliases:
 
 Required: False
 Position: Named
-Default value: False
+Default value: (Get-LumosDefaultValue -Name 'ExcludeSystem' -Value $false)
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -147,6 +150,8 @@ Use this if the taskbar still doesn't
 update without it on your system, or if you want any File Explorer windows you already had open
 to pick up the change too - the broadcast alone reliably updates the taskbar, but not existing
 Explorer windows' own chrome.
+Defaults to the value saved with Set-LumosDefault -RestartExplorer,
+if any.
 
 ```yaml
 Type: SwitchParameter
@@ -155,13 +160,15 @@ Aliases:
 
 Required: False
 Position: Named
-Default value: False
+Default value: (Get-LumosDefaultValue -Name 'RestartExplorer' -Value $false)
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
 ### -IncludeOfficeProPlus
 Include changing the theme of Microsoft Office to Dark/Light (Windows only).
+Defaults to the
+value saved with Set-LumosDefault -IncludeOfficeProPlus, if any.
 
 ```yaml
 Type: SwitchParameter
@@ -170,13 +177,15 @@ Aliases:
 
 Required: False
 Position: Named
-Default value: False
+Default value: (Get-LumosDefaultValue -Name 'IncludeOfficeProPlus' -Value $false)
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
 ### -ExcludeApps
-Exclude changing the Applications (where supported) theme when switching to Dark/Light (Windows only).
+Exclude changing the Applications (where supported) theme when switching to Dark/Light (Windows
+only).
+Defaults to the value saved with Set-LumosDefault -ExcludeApps, if any.
 
 ```yaml
 Type: SwitchParameter
@@ -185,13 +194,14 @@ Aliases:
 
 Required: False
 Position: Named
-Default value: False
+Default value: (Get-LumosDefaultValue -Name 'ExcludeApps' -Value $false)
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
 ### -DarkWallpaper
 Specify a path to use to modify the Desktop Wallpaper to when switching to the Dark theme.
+Defaults to the value saved with Set-LumosDefault -DarkWallpaper, if any.
 
 ```yaml
 Type: String
@@ -200,13 +210,14 @@ Aliases:
 
 Required: False
 Position: Named
-Default value: None
+Default value: (Get-LumosDefaultValue -Name 'DarkWallpaper' -Value $null)
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
 ### -LightWallpaper
 Specify a path to use to modify the Desktop Wallpaper to when switching to the Light theme.
+Defaults to the value saved with Set-LumosDefault -LightWallpaper, if any.
 
 ```yaml
 Type: String
@@ -215,7 +226,7 @@ Aliases:
 
 Required: False
 Position: Named
-Default value: None
+Default value: (Get-LumosDefaultValue -Name 'LightWallpaper' -Value $null)
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
