@@ -1,6 +1,6 @@
 # Change Log
 
-## !Deploy 4.2.0
+## [4.2.0] - 2026-10-30
 
 * [Feature] `Invoke-Lumos` now supports Linux on the GNOME desktop, switching the theme via `gsettings org.gnome.desktop.interface color-scheme` (and the wallpaper via `org.gnome.desktop.background picture-uri`/`picture-uri-dark`). `-Dark`, `-Light`, `-Auto`, `-DarkWallpaper`/`-LightWallpaper`, and toggling with no switches all work the same as on Windows/macOS. `-ExcludeSystem`, `-ExcludeApps` and `-IncludeOfficeProPlus` remain Windows-only, as on macOS. Throws if `gsettings` isn't found, since other desktop environments (KDE, XFCE, etc.) aren't currently supported. `Register-LumosScheduledTask` remains Windows-only.
 

@@ -1,7 +1,7 @@
 # PowerShell-Lumos
 
 [![Build Status](https://github.com/markwragg/PowerShell-Lumos/actions/workflows/build.yml/badge.svg)](https://github.com/markwragg/PowerShell-Lumos/actions/workflows/build.yml)
-![coverage](https://img.shields.io/badge/coverage-99%25-brightgreen.svg)
+![coverage](https://img.shields.io/badge/coverage-98%25-brightgreen.svg)
 [![PowerShell Gallery Version](https://img.shields.io/powershellgallery/v/lumos?label=PS%20Gallery)](https://www.powershellgallery.com/packages/lumos)
 [![PowerShell Gallery Downloads](https://img.shields.io/powershellgallery/dt/lumos?color=D3D3D3)](https://www.powershellgallery.com/packages/lumos)
 

@@ -1,7 +1,7 @@
 # Invoke-Lumos
 
 ## SYNOPSIS
-Sets the Windows or Mac Theme to light or dark mode.
+Sets the Windows, Mac or Linux (GNOME) Theme to light or dark mode.
 
 ## SYNTAX
 
@@ -24,10 +24,10 @@ Invoke-Lumos [-Auto] [-ExcludeSystem] [-RestartExplorer] [-IncludeOfficeProPlus]
 ```
 
 ## DESCRIPTION
-Use this cmdlet to change the theme on Windows 10/11 or macOS to the light or dark theme,
-either as specified by parameters, automatically based on your location and whether it is
-currently before or after sunrise/sunset (-Auto), or (if none of those are specified) by
-toggling to whichever theme isn't currently active.
+Use this cmdlet to change the theme on Windows 10/11, macOS or Linux (GNOME desktop only) to the
+light or dark theme, either as specified by parameters, automatically based on your location and
+whether it is currently before or after sunrise/sunset (-Auto), or (if none of those are
+specified) by toggling to whichever theme isn't currently active.
 
 ## EXAMPLES
 
