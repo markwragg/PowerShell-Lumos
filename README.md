@@ -1,6 +1,10 @@
 # PowerShell-Lumos
 
-[![Build Status](https://dev.azure.com/markwragg/GitHub/_apis/build/status/markwragg.PowerShell-Lumos?branchName=master)](https://dev.azure.com/markwragg/GitHub/_build/latest?definitionId=1&branchName=master) ![coverage](https://img.shields.io/badge/coverage-99%25-brightgreen.svg)
+[![Build Status](https://github.com/markwragg/PowerShell-Lumos/actions/workflows/build.yml/badge.svg)](https://github.com/markwragg/PowerShell-Lumos/actions/workflows/build.yml)
+![coverage](https://img.shields.io/badge/coverage-99%25-brightgreen.svg)
+[![PowerShell Gallery Version](https://img.shields.io/powershellgallery/v/lumos?label=PS%20Gallery)](https://www.powershellgallery.com/packages/lumos)
+[![PowerShell Gallery Downloads](https://img.shields.io/powershellgallery/dt/lumos?color=D3D3D3)](https://www.powershellgallery.com/packages/lumos)
+
 
 A PowerShell module for switching Windows 10/11 and macOS between light and dark themes depending on whether it is day or night.
 
@@ -79,6 +83,30 @@ On Windows, when the System theme changes, Lumos applies it to the taskbar by br
 ```PowerShell
 Invoke-Lumos -Dark -RestartExplorer
 ```
+
+## Defaults
+
+If you find yourself passing the same switches to `Invoke-Lumos` every time, you can save them as defaults instead, so you don't have to specify them again:
+
+```PowerShell
+Set-LumosDefault -Auto -RestartExplorer -DarkWallpaper c:\wallpaper\dark.png -LightWallpaper c:\wallpaper\light.png
+```
+
+`Invoke-Lumos` then uses these automatically whenever the corresponding switch isn't explicitly specified - explicitly passing a switch (e.g. `Invoke-Lumos -RestartExplorer:$false`) always overrides the saved default for that call. You can save a default for `-Auto`, `-ExcludeSystem`, `-RestartExplorer`, `-IncludeOfficeProPlus`, `-ExcludeApps`, `-DarkWallpaper` and `-LightWallpaper`.
+
+You can view your currently saved defaults with:
+
+```PowerShell
+Get-LumosDefault
+```
+
+And remove them all, restoring the module's built-in behavior, with:
+
+```PowerShell
+Set-LumosDefault -Reset
+```
+
+Defaults are saved to a `.lumos` folder in your user profile directory (`~/.lumos`), so they survive a module upgrade.
 
 ## Scheduling
 

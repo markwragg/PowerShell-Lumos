@@ -46,6 +46,12 @@ Describe "Invoke-Lumos PS$PSVersion" {
             Mock Invoke-AppleScript {}
 
             Mock Write-Error {}
+
+            # Default: no saved preference for any parameter, so Invoke-Lumos's own built-in default (-Value)
+            # applies - keeps every other context in this file deterministic regardless of whether the real
+            # $HOME/.lumos/Lumos.defaults.json happens to exist on the machine running these tests. The
+            # "saved defaults" context below overrides this to verify a saved preference actually gets used.
+            Mock Get-LumosDefaultValue { $Value }
         }
 
         # Pins the simulated platform to Windows before every test in this file, so the "default"
@@ -164,8 +170,10 @@ Describe "Invoke-Lumos PS$PSVersion" {
                 $InvokeLumos = Invoke-Lumos -Dark -RestartExplorer
             }
 
-            It 'Should not restart Explorer, since the System theme did not change' {
-                Should -Invoke Stop-Process -Times 0 -Exactly
+            It 'Should still restart Explorer, since -RestartExplorer was specified explicitly' {
+                Should -Invoke Stop-Process -Times 1 -Exactly -ParameterFilter {
+                    $ProcessName -eq 'explorer'
+                }
                 Should -Invoke Send-SettingChangeMessage -Times 0 -Exactly
             }
         }
@@ -484,6 +492,80 @@ Describe "Invoke-Lumos PS$PSVersion" {
             It 'Should not broadcast a WM_SETTINGCHANGE message, since nothing changed' {
                 Should -Invoke Send-SettingChangeMessage -Times 0 -Exactly
                 Should -Invoke Stop-Process -Times 0 -Exactly
+            }
+        }
+
+        Context 'Invoke-Lumos using a saved -Auto default, with no Dark/Light/Auto switch specified' {
+
+            BeforeEach {
+                Mock Get-LumosDefaultValue {
+                    if ($Name -eq 'Auto') { $true } else { $Value }
+                }
+
+                Mock Get-LocalDaylight {
+                    [pscustomobject]@{
+                        Sunrise = (Get-Date).AddHours(-1)
+                        Sunset  = (Get-Date).AddHours(1)
+                    }
+                }
+
+                $InvokeLumos = Invoke-Lumos
+            }
+
+            It 'Should return null' {
+                $InvokeLumos | Should -Be $null
+            }
+
+            It 'Should look up the current location and daylight times, as if -Auto had been specified' {
+                Should -Invoke Get-UserLocation -Times 1 -Exactly
+                Should -Invoke Get-LocalDaylight -Times 1 -Exactly
+            }
+        }
+
+        Context 'Invoke-Lumos using saved defaults for -ExcludeSystem, -ExcludeApps and -DarkWallpaper' {
+
+            BeforeEach {
+                Mock Get-LumosDefaultValue {
+                    switch ($Name) {
+                        'ExcludeSystem' { $true }
+                        'ExcludeApps' { $true }
+                        'DarkWallpaper' { 'c:\default-dark.png' }
+                        default { $Value }
+                    }
+                }
+
+                $InvokeLumos = Invoke-Lumos -Dark
+            }
+
+            It 'Should return null' {
+                $InvokeLumos | Should -Be $null
+            }
+
+            It 'Should not set either theme value, since both were excluded by the saved defaults' {
+                Should -Invoke Set-ItemProperty -Times 0 -Exactly
+            }
+
+            It 'Should set the wallpaper saved as the default for -DarkWallpaper' {
+                Should -Invoke Set-Wallpaper -Times 1 -Exactly -ParameterFilter {
+                    $Image -eq 'c:\default-dark.png'
+                }
+            }
+        }
+
+        Context 'Invoke-Lumos with an explicit parameter overriding a saved default' {
+
+            BeforeEach {
+                Mock Get-LumosDefaultValue {
+                    if ($Name -eq 'ExcludeSystem') { $true } else { $Value }
+                }
+
+                $InvokeLumos = Invoke-Lumos -Dark -ExcludeSystem:$false
+            }
+
+            It 'Should still set the System theme, since -ExcludeSystem:$false was specified explicitly' {
+                Should -Invoke Set-ItemProperty -Times 1 -Exactly -ParameterFilter {
+                    $Name -eq 'SystemUsesLightTheme'
+                }
             }
         }
 

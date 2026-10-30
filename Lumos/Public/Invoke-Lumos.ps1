@@ -18,28 +18,35 @@ Function Invoke-Lumos {
         .PARAMETER Auto
             Switch to the Dark or Light OS theme automatically, based on your current location (determined
             via your public IP address) and whether it is currently before or after sunrise/sunset there.
+            Defaults to the value saved with Set-LumosDefault -Auto, if any.
 
         .PARAMETER ExcludeSystem
-            Exclude changing the System theme when switching to Dark/Light (Windows only).
+            Exclude changing the System theme when switching to Dark/Light (Windows only). Defaults to the
+            value saved with Set-LumosDefault -ExcludeSystem, if any.
 
         .PARAMETER RestartExplorer
             Restart Explorer to apply the System theme change (Windows only), instead of the default of
             broadcasting a WM_SETTINGCHANGE/WM_THEMECHANGED message. Use this if the taskbar still doesn't
             update without it on your system, or if you want any File Explorer windows you already had open
             to pick up the change too - the broadcast alone reliably updates the taskbar, but not existing
-            Explorer windows' own chrome.
+            Explorer windows' own chrome. Defaults to the value saved with Set-LumosDefault -RestartExplorer,
+            if any.
 
         .PARAMETER IncludeOfficeProPlus
-            Include changing the theme of Microsoft Office to Dark/Light (Windows only).
+            Include changing the theme of Microsoft Office to Dark/Light (Windows only). Defaults to the
+            value saved with Set-LumosDefault -IncludeOfficeProPlus, if any.
 
         .PARAMETER ExcludeApps
-            Exclude changing the Applications (where supported) theme when switching to Dark/Light (Windows only).
+            Exclude changing the Applications (where supported) theme when switching to Dark/Light (Windows
+            only). Defaults to the value saved with Set-LumosDefault -ExcludeApps, if any.
 
         .PARAMETER DarkWallpaper
             Specify a path to use to modify the Desktop Wallpaper to when switching to the Dark theme.
+            Defaults to the value saved with Set-LumosDefault -DarkWallpaper, if any.
 
         .PARAMETER LightWallpaper
             Specify a path to use to modify the Desktop Wallpaper to when switching to the Light theme.
+            Defaults to the value saved with Set-LumosDefault -LightWallpaper, if any.
 
         .EXAMPLE
             Invoke-Lumos -Dark -DarkWallpaper ./dark-wallpaper.png
@@ -86,25 +93,25 @@ Function Invoke-Lumos {
 
         [Parameter(ParameterSetName = 'Auto')]
         [switch]
-        $Auto,
+        $Auto = (Get-LumosDefaultValue -Name 'Auto' -Value $false),
 
         [switch]
-        $ExcludeSystem,
+        $ExcludeSystem = (Get-LumosDefaultValue -Name 'ExcludeSystem' -Value $false),
 
         [switch]
-        $RestartExplorer,
+        $RestartExplorer = (Get-LumosDefaultValue -Name 'RestartExplorer' -Value $false),
 
         [switch]
-        $IncludeOfficeProPlus,
+        $IncludeOfficeProPlus = (Get-LumosDefaultValue -Name 'IncludeOfficeProPlus' -Value $false),
 
         [switch]
-        $ExcludeApps,
+        $ExcludeApps = (Get-LumosDefaultValue -Name 'ExcludeApps' -Value $false),
 
         [string]
-        $DarkWallpaper,
+        $DarkWallpaper = (Get-LumosDefaultValue -Name 'DarkWallpaper' -Value $null),
 
         [string]
-        $LightWallpaper
+        $LightWallpaper = (Get-LumosDefaultValue -Name 'LightWallpaper' -Value $null)
     )
 
     if ($Dark) {
@@ -197,8 +204,7 @@ Function Invoke-Lumos {
         $CurrentSystemTheme = (Get-ItemProperty -Path $ThemeRegKey -Name 'SystemUsesLightTheme' -ErrorAction SilentlyContinue).SystemUsesLightTheme
 
         if ($Lumos -eq 'Undefined') {
-            # No -Dark/-Light/-Auto specified: toggle to whichever theme isn't currently active, mirroring
-            # the behaviour of the MacOS "not dark mode" AppleScript command further down.
+            # No -Dark/-Light/-Auto specified: toggle to whichever theme isn't currently active
             $Lumos = [int](-not [bool]$CurrentSystemTheme)
             $Status = if ($Lumos -eq 1) { 'Light' } else { 'Dark' }
         }
@@ -207,19 +213,16 @@ Function Invoke-Lumos {
             if ($CurrentSystemTheme -ne $Lumos) {
                 Write-Verbose "Setting System to $Status Theme.."
                 Set-ItemProperty -Path $ThemeRegKey -Name 'SystemUsesLightTheme' -Value $Lumos
+            }
 
-                # The taskbar (and Start, Action Center) follow SystemUsesLightTheme, not AppsUseLightTheme, and
-                # need to be told the setting changed before they'll repaint. Only doing this when the theme
-                # actually changed avoids the disruption of restarting Explorer (or even the lighter-weight
-                # broadcast below) on every run of a frequently scheduled task.
-                if ($RestartExplorer) {
-                    Write-Verbose 'Restarting Explorer to apply the theme change to the taskbar..'
-                    Stop-Process -ProcessName explorer
-                }
-                else {
-                    Write-Verbose 'Broadcasting a WM_SETTINGCHANGE message to apply the theme change to the taskbar..'
-                    Send-SettingChangeMessage
-                }
+            # Restart Explorer to apply the theme change to the taskbar, or broadcast a WM_SETTINGCHANGE message if not restarting Explorer.
+            if ($RestartExplorer) {
+                Write-Verbose 'Restarting Explorer to apply the theme change to the taskbar..'
+                Stop-Process -ProcessName explorer
+            }
+            elseif ($CurrentSystemTheme -ne $Lumos) {
+                Write-Verbose 'Broadcasting a WM_SETTINGCHANGE message to apply the theme change to the taskbar..'
+                Send-SettingChangeMessage
             }
         }
         if (-not $ExcludeApps) {

@@ -1,5 +1,9 @@
 # Change Log
 
+## !Deploy 4.1.0
+
+* [Feature] Added `Set-LumosDefault` and `Get-LumosDefault`, to save default values for `Invoke-Lumos`'s `-Auto`, `-ExcludeSystem`, `-RestartExplorer`, `-IncludeOfficeProPlus`, `-ExcludeApps`, `-DarkWallpaper` and `-LightWallpaper` parameters, so they don't need to be specified on every call. Explicitly specifying a parameter always overrides the saved default. Defaults are stored in a `.lumos` folder in the user's home directory, so they survive a module upgrade.
+
 ## [4.0.0] - 2026-09-25
 
 * [Breaking] `Invoke-Lumos` with no switches now toggles to whichever theme isn't currently active on Windows, instead of automatically picking Dark/Light based on your location and time of day. This matches the existing macOS behavior. Added a new `-Auto` switch to `Invoke-Lumos` to get the previous automatic, location/time-based behavior back on either platform.
