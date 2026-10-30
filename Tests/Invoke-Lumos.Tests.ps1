@@ -45,6 +45,10 @@ Describe "Invoke-Lumos PS$PSVersion" {
 
             Mock Invoke-AppleScript {}
 
+            Mock Invoke-GSettings {}
+
+            Mock Get-Command { $true } -ParameterFilter { $Name -eq 'gsettings' }
+
             Mock Write-Error {}
 
             # Default: no saved preference for any parameter, so Invoke-Lumos's own built-in default (-Value)
@@ -790,14 +794,163 @@ Describe "Invoke-Lumos PS$PSVersion" {
             }
         }
 
-        Context 'Invoke-Lumos on Linux' {
+        Context 'Invoke-Lumos -Dark on Linux' {
 
             BeforeEach {
                 Set-Variable -Name 'IsLinux' -Value $true -Force -Scope Script
+
+                $InvokeLumos = Invoke-Lumos -Dark
             }
 
-            It 'Should throw as Linux is not supported' {
-                { Invoke-Lumos -Dark } | Should -Throw 'Linux is not currently supported by this module.'
+            It 'Should return null' {
+                $InvokeLumos | Should -Be $null
+            }
+
+            It 'Should not look up the user location' {
+                Should -Invoke Get-UserLocation -Times 0 -Exactly
+            }
+
+            It 'Should switch to dark mode via gsettings' {
+                Should -Invoke Invoke-GSettings -Times 1 -Exactly -ParameterFilter {
+                    ($Arguments -join ' ') -eq 'set org.gnome.desktop.interface color-scheme prefer-dark'
+                }
+            }
+
+            It 'Should not touch the Windows registry or call AppleScript' {
+                Should -Invoke Set-ItemProperty -Times 0 -Exactly
+                Should -Invoke Invoke-AppleScript -Times 0 -Exactly
+            }
+        }
+
+        Context 'Invoke-Lumos -Light on Linux' {
+
+            BeforeEach {
+                Set-Variable -Name 'IsLinux' -Value $true -Force -Scope Script
+
+                $InvokeLumos = Invoke-Lumos -Light
+            }
+
+            It 'Should switch to light mode via gsettings' {
+                Should -Invoke Invoke-GSettings -Times 1 -Exactly -ParameterFilter {
+                    ($Arguments -join ' ') -eq 'set org.gnome.desktop.interface color-scheme prefer-light'
+                }
+            }
+        }
+
+        Context 'Invoke-Lumos on Linux with no -Dark or -Light switch, when the color-scheme is currently prefer-dark' {
+
+            BeforeEach {
+                Set-Variable -Name 'IsLinux' -Value $true -Force -Scope Script
+
+                Mock Invoke-GSettings {
+                    "'prefer-dark'`n"
+                } -ParameterFilter { ($Arguments -join ' ') -eq 'get org.gnome.desktop.interface color-scheme' }
+
+                $InvokeLumos = Invoke-Lumos
+            }
+
+            It 'Should not look up the user location' {
+                Should -Invoke Get-UserLocation -Times 0 -Exactly
+            }
+
+            It 'Should toggle to the Light theme, since Dark is currently active' {
+                Should -Invoke Invoke-GSettings -Times 1 -Exactly -ParameterFilter {
+                    ($Arguments -join ' ') -eq 'set org.gnome.desktop.interface color-scheme prefer-light'
+                }
+            }
+        }
+
+        Context 'Invoke-Lumos on Linux with no -Dark or -Light switch, when the color-scheme is currently prefer-light' {
+
+            BeforeEach {
+                Set-Variable -Name 'IsLinux' -Value $true -Force -Scope Script
+
+                Mock Invoke-GSettings {
+                    "'prefer-light'`n"
+                } -ParameterFilter { ($Arguments -join ' ') -eq 'get org.gnome.desktop.interface color-scheme' }
+
+                $InvokeLumos = Invoke-Lumos
+            }
+
+            It 'Should toggle to the Dark theme, since Light is currently active' {
+                Should -Invoke Invoke-GSettings -Times 1 -Exactly -ParameterFilter {
+                    ($Arguments -join ' ') -eq 'set org.gnome.desktop.interface color-scheme prefer-dark'
+                }
+            }
+        }
+
+        Context 'Invoke-Lumos -Dark -DarkWallpaper on Linux' {
+
+            BeforeEach {
+                Set-Variable -Name 'IsLinux' -Value $true -Force -Scope Script
+
+                $InvokeLumos = Invoke-Lumos -Dark -DarkWallpaper '/home/mark/wallpaper.png'
+            }
+
+            It 'Should set only the dark picture-uri key via gsettings' {
+                Should -Invoke Invoke-GSettings -Times 1 -Exactly -ParameterFilter {
+                    ($Arguments -join ' ') -eq 'set org.gnome.desktop.background picture-uri-dark file:///home/mark/wallpaper.png'
+                }
+                Should -Invoke Invoke-GSettings -Times 0 -Exactly -ParameterFilter {
+                    ($Arguments -join ' ') -eq 'set org.gnome.desktop.background picture-uri file:///home/mark/wallpaper.png'
+                }
+            }
+
+            It 'Should not call the Windows-only Set-Wallpaper function' {
+                Should -Invoke Set-Wallpaper -Times 0 -Exactly
+            }
+        }
+
+        Context 'Invoke-Lumos -Light -LightWallpaper on Linux' {
+
+            BeforeEach {
+                Set-Variable -Name 'IsLinux' -Value $true -Force -Scope Script
+
+                $InvokeLumos = Invoke-Lumos -Light -LightWallpaper '/home/mark/wallpaper.png'
+            }
+
+            It 'Should set only the light picture-uri key via gsettings' {
+                Should -Invoke Invoke-GSettings -Times 1 -Exactly -ParameterFilter {
+                    ($Arguments -join ' ') -eq 'set org.gnome.desktop.background picture-uri file:///home/mark/wallpaper.png'
+                }
+                Should -Invoke Invoke-GSettings -Times 0 -Exactly -ParameterFilter {
+                    ($Arguments -join ' ') -eq 'set org.gnome.desktop.background picture-uri-dark file:///home/mark/wallpaper.png'
+                }
+            }
+
+            It 'Should not call the Windows-only Set-Wallpaper function' {
+                Should -Invoke Set-Wallpaper -Times 0 -Exactly
+            }
+        }
+
+        Context 'Invoke-Lumos -Dark -ExcludeSystem -ExcludeApps -IncludeOfficeProPlus on Linux' {
+
+            BeforeEach {
+                Set-Variable -Name 'IsLinux' -Value $true -Force -Scope Script
+
+                $InvokeLumos = Invoke-Lumos -Dark -ExcludeSystem -ExcludeApps -IncludeOfficeProPlus
+            }
+
+            It 'Should warn that each Windows-only switch is unsupported on Linux' {
+                Should -Invoke Write-Error -Times 3 -Exactly
+            }
+        }
+
+        Context 'Invoke-Lumos on Linux when gsettings is not available' {
+
+            BeforeEach {
+                Set-Variable -Name 'IsLinux' -Value $true -Force -Scope Script
+
+                Mock Get-Command { $null } -ParameterFilter { $Name -eq 'gsettings' }
+            }
+
+            It 'Should throw, since only GNOME (via gsettings) is currently supported on Linux' {
+                { Invoke-Lumos -Dark } | Should -Throw 'Lumos only currently supports Linux via GNOME (using gsettings), which was not found on this system.'
+            }
+
+            It 'Should not call gsettings' {
+                { Invoke-Lumos -Dark } | Should -Throw
+                Should -Invoke Invoke-GSettings -Times 0 -Exactly
             }
         }
     }

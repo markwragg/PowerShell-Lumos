@@ -6,7 +6,7 @@
 [![PowerShell Gallery Downloads](https://img.shields.io/powershellgallery/dt/lumos?color=D3D3D3)](https://www.powershellgallery.com/packages/lumos)
 
 
-A PowerShell module for switching Windows 10/11 and macOS between light and dark themes depending on whether it is day or night.
+A PowerShell module for switching Windows 10/11, macOS and Linux (GNOME) between light and dark themes depending on whether it is day or night.
 
 > [!WARNING]
 > **Breaking change for Windows users:** Lumos version 4.0+: Running `Invoke-Lumos` with no switches used to automatically pick Dark/Light based on your location and time of day on Windows. It now toggles to the opposite of whatever theme is currently active instead (matching the existing macOS behavior). Use the new `-Auto` switch to get the old automatic behavior back.
@@ -38,11 +38,11 @@ You can manually trigger Lumos as follows:
 Invoke-Lumos
 ```
 
-On both Windows and macOS, using `Invoke-Lumos` with no switches will switch the theme to its alternate, i.e. if it's Light it will switch to Dark and if Dark switch to Light.
+On Windows, macOS and Linux (GNOME), using `Invoke-Lumos` with no switches will switch the theme to its alternate, i.e. if it's Light it will switch to Dark and if Dark switch to Light.
 
 You can also simply use the alias `Lumos`.
 
-You can explicitly specify whether you want the Dark or Light modes on both Windows 10/11 and macOS with the following switches:
+You can explicitly specify whether you want the Dark or Light modes on Windows 10/11, macOS and Linux (GNOME) with the following switches:
 
 ```PowerShell
 Invoke-Lumos -Dark
@@ -56,7 +56,7 @@ Or you can have Lumos decide automatically, based on your location (determined f
 Invoke-Lumos -Auto
 ```
 
-If the sun is down, the theme will be set to dark. If the sun is up, the theme will be set to light. `-Auto` works the same way on both Windows and macOS.
+If the sun is down, the theme will be set to dark. If the sun is up, the theme will be set to light. `-Auto` works the same way on Windows, macOS and Linux.
 
 By default the cmdlet will change both the System and Application themes, but on Windows 10/11 if you'd like to just change one of these you can exclude the other by using these switches:
 
@@ -65,9 +65,9 @@ Invoke-Lumos -Dark -ExcludeSystem
 
 Invoke-Lumos -Light -ExcludeApps
 ```
-These switches are not available on macOS.
+These switches are not available on macOS or Linux.
 
-If you'd like your wallpaper to change with the theme (on Windows 10/11 or macOS), you can specify a path to these:
+If you'd like your wallpaper to change with the theme (on Windows 10/11, macOS or Linux), you can specify a path to these:
 
 ```PowerShell
 Invoke-Lumos -Dark -DarkWallpaper c:\wallpaper\dark.png
@@ -86,6 +86,8 @@ On Windows, when the System theme changes, Lumos applies it to the taskbar by br
 ```PowerShell
 Invoke-Lumos -Dark -RestartExplorer
 ```
+
+On Linux, Lumos currently only supports the GNOME desktop (the default on Ubuntu, Fedora, Debian and others), switching the theme via `gsettings org.gnome.desktop.interface color-scheme`. If `gsettings` isn't found, `Invoke-Lumos` throws rather than silently doing nothing. Other desktop environments (KDE, XFCE, etc.) aren't currently supported.
 
 ## Defaults
 
@@ -113,7 +115,7 @@ Defaults are saved to a `.lumos` folder in your user profile directory (`~/.lumo
 
 ## Scheduling
 
-If you'd like Windows 10/11 to automatically switch from Light to Dark mode based on your local sunrise/sunset times, you can use the following cmdlet to add a Scheduled Task to do so (this cmdlet does not currently support macOS):
+If you'd like Windows 10/11 to automatically switch from Light to Dark mode based on your local sunrise/sunset times, you can use the following cmdlet to add a Scheduled Task to do so (this cmdlet does not currently support macOS or Linux):
 
 ```PowerShell
 Register-LumosScheduledTask

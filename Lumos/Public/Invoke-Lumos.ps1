@@ -1,13 +1,13 @@
 Function Invoke-Lumos {
     <#
         .SYNOPSIS
-            Sets the Windows or Mac Theme to light or dark mode.
+            Sets the Windows, Mac or Linux (GNOME) Theme to light or dark mode.
 
         .DESCRIPTION
-            Use this cmdlet to change the theme on Windows 10/11 or macOS to the light or dark theme,
-            either as specified by parameters, automatically based on your location and whether it is
-            currently before or after sunrise/sunset (-Auto), or (if none of those are specified) by
-            toggling to whichever theme isn't currently active.
+            Use this cmdlet to change the theme on Windows 10/11, macOS or Linux (GNOME desktop only) to the
+            light or dark theme, either as specified by parameters, automatically based on your location and
+            whether it is currently before or after sunrise/sunset (-Auto), or (if none of those are
+            specified) by toggling to whichever theme isn't currently active.
 
         .PARAMETER Dark
             Switch to the Dark OS theme.
@@ -193,8 +193,42 @@ Function Invoke-Lumos {
         }
     }
     elseif ($IsLinux) {
-        ### Linux ###
-        Throw 'Linux is not currently supported by this module.'
+        ### Linux (GNOME) ###
+        if (-not (Get-Command -Name 'gsettings' -ErrorAction SilentlyContinue)) {
+            Throw 'Lumos only currently supports Linux via GNOME (using gsettings), which was not found on this system.'
+        }
+
+        if ($Lumos -eq 'Undefined') {
+            # No -Dark/-Light/-Auto specified: toggle to whichever theme isn't currently active
+            $CurrentColorScheme = (Invoke-GSettings -Arguments @('get', 'org.gnome.desktop.interface', 'color-scheme')) -replace "['\r\n]"
+            $Lumos = if ($CurrentColorScheme -eq 'prefer-dark') { 1 } else { 0 }
+            $Status = if ($Lumos -eq 1) { 'Light' } else { 'Dark' }
+        }
+
+        $ColorScheme = if ($Lumos -eq 0) { 'prefer-dark' } else { 'prefer-light' }
+
+        Write-Verbose "Setting GNOME color-scheme to $ColorScheme.."
+        Invoke-GSettings -Arguments @('set', 'org.gnome.desktop.interface', 'color-scheme', $ColorScheme)
+
+        if ($ExcludeSystem) {
+            Write-Error '-ExcludeSystem is not currently supported on Linux.'
+        }
+
+        if ($ExcludeApps) {
+            Write-Error '-ExcludeApps is not currently supported on Linux.'
+        }
+
+        if ($IncludeOfficeProPlus) {
+            Write-Error '-IncludeOfficeProPlus is not currently supported on Linux.'
+        }
+
+        if ($Wallpaper) {
+            $WallpaperPath = if ([System.IO.Path]::IsPathRooted($Wallpaper)) { $Wallpaper } else { Join-Path -Path (Get-Location) -ChildPath $Wallpaper }
+            $WallpaperSegments = $WallpaperPath.TrimStart('/') -split '/' | ForEach-Object { [uri]::EscapeDataString($_) }
+            $WallpaperUri = 'file:///' + ($WallpaperSegments -join '/')
+            $PictureUriKey = if ($Lumos -eq 0) { 'picture-uri-dark' } else { 'picture-uri' }
+            Invoke-GSettings -Arguments @('set', 'org.gnome.desktop.background', $PictureUriKey, $WallpaperUri)
+        }
     }
     else {
         ### Windows ###

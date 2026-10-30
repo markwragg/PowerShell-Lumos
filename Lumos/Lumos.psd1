@@ -30,7 +30,7 @@ CompanyName = 'wragg.io'
 Copyright = '(c) 2019 Mark Wragg. All rights reserved.'
 
 # Description of the functionality provided by this module
-Description = 'A PowerShell module for switching Windows 10/11 between light and dark themes depending on whether it is day or night.'
+Description = 'A PowerShell module for switching Windows 10/11, macOS and Linux (GNOME) between light and dark themes depending on whether it is day or night.'
 
 # Minimum version of the Windows PowerShell engine required by this module
 # PowerShellVersion = ''
@@ -95,7 +95,7 @@ PrivateData = @{
     PSData = @{
 
         # Tags applied to this module. These help with module discovery in online galleries.
-        Tags = 'Windows','MacOS','Theme','Dark','Light','Wallpaper','PSCore'
+        Tags = 'Windows','MacOS','Linux','GNOME','Theme','Dark','Light','Wallpaper','PSCore'
 
         # A URL to the license for this module.
         # LicenseUri = ''

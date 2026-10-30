@@ -1,5 +1,9 @@
 # Change Log
 
+## !Deploy 4.2.0
+
+* [Feature] `Invoke-Lumos` now supports Linux on the GNOME desktop, switching the theme via `gsettings org.gnome.desktop.interface color-scheme` (and the wallpaper via `org.gnome.desktop.background picture-uri`/`picture-uri-dark`). `-Dark`, `-Light`, `-Auto`, `-DarkWallpaper`/`-LightWallpaper`, and toggling with no switches all work the same as on Windows/macOS. `-ExcludeSystem`, `-ExcludeApps` and `-IncludeOfficeProPlus` remain Windows-only, as on macOS. Throws if `gsettings` isn't found, since other desktop environments (KDE, XFCE, etc.) aren't currently supported. `Register-LumosScheduledTask` remains Windows-only.
+
 ## [4.1.0] - 2026-10-30
 
 * [Feature] Added `Set-LumosDefault` and `Get-LumosDefault`, to save default values for `Invoke-Lumos`'s `-Auto`, `-ExcludeSystem`, `-RestartExplorer`, `-IncludeOfficeProPlus`, `-ExcludeApps`, `-DarkWallpaper` and `-LightWallpaper` parameters, so they don't need to be specified on every call. Explicitly specifying a parameter always overrides the saved default. Defaults are stored in a `.lumos` folder in the user's home directory, so they survive a module upgrade.
