@@ -21,12 +21,6 @@ day of the week this cmdlet was run, and whose only job is to recompute the curr
 and update the "Lumos" task's trigger times to match via Update-LumosScheduledTask - weekly is
 frequent enough to keep the triggers close to sunrise/sunset without needing daily API calls to
 determine location and daylight times.
-Keeping this in a separate task - rather than as a second
-action of the "Lumos" task itself, as an earlier version of this module did - matters: Windows
-Task Scheduler won't let a task modify its own definition while it's the active running instance,
-which is what made that earlier approach throw "Access is denied" and lose its triggers entirely.
-Running the update from a genuinely different task, at a time unlikely to overlap with "Lumos"
-actually running, avoids that.
 
 If you'd rather not rely on the automatic sunrise/sunset lookup (or don't want Lumos calling out to
 it at all), specify -Sunrise and -Sunset yourself to use fixed daily trigger times instead, or use
@@ -42,25 +36,12 @@ schedule), it's removed, since it would otherwise keep overwriting your fixed ti
 
 Both tasks run as the current user at standard (non-elevated) privilege - Lumos only ever changes
 current-user settings, so no administrator rights are required.
-Neither task has an "at logon"
-trigger, since some endpoint security software blocks non-admin users from registering one (likely
-because it's a common persistence technique).
 
 Returns the registered scheduled task(s), displayed with their schedule source and a summary of
 the times that were registered (e.g.
 to verify -FromNightLight or the automatic sunrise/sunset
 lookup picked up what you expected) - the full underlying task, including its Triggers, is still
 there to inspect if you need more detail.
-
-If PowerShell 7 is installed from the Microsoft Store, its exact path changes with every update
-(it lives in a version-specific folder under WindowsApps), which would otherwise leave the
-registered task pointing at a pwsh.exe that no longer exists after the next update.
-In that case
-this instead points the task at Windows' own stable app-execution-alias for pwsh.exe, which
-Windows keeps up to date across Store updates - so re-running this cmdlet after updating
-PowerShell shouldn't be necessary.
-This doesn't apply to Windows PowerShell or a traditionally
-installed PowerShell 7, both of which already have a stable path.
 
 ## EXAMPLES
 
