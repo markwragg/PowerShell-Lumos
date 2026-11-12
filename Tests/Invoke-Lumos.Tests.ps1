@@ -267,6 +267,111 @@ Describe "Invoke-Lumos PS$PSVersion" {
         }
 
 
+        Context "Invoke-Lumos 'Dark' (positional -Mode)" {
+
+            BeforeEach {
+                $InvokeLumos = Invoke-Lumos 'Dark'
+            }
+
+            It 'Should return null' {
+                $InvokeLumos | Should -Be $null
+            }
+
+            It 'Should call Get-Userlocation 0 times' {
+                Should -Invoke Get-UserLocation -Times 0 -Exactly
+            }
+
+            It 'Should set the Dark theme, same as -Dark' {
+                Should -Invoke Set-ItemProperty -Times 1 -Exactly -ParameterFilter {
+                    $Name -eq 'SystemUsesLightTheme' -and $Value -eq 0
+                }
+                Should -Invoke Set-ItemProperty -Times 1 -Exactly -ParameterFilter {
+                    $Name -eq 'AppsUseLightTheme' -and $Value -eq 0
+                }
+            }
+        }
+
+        Context "Invoke-Lumos -Mode 'Light' (named)" {
+
+            BeforeEach {
+                $InvokeLumos = Invoke-Lumos -Mode 'Light'
+            }
+
+            It 'Should return null' {
+                $InvokeLumos | Should -Be $null
+            }
+
+            It 'Should set the Light theme, same as -Light' {
+                Should -Invoke Set-ItemProperty -Times 1 -Exactly -ParameterFilter {
+                    $Name -eq 'SystemUsesLightTheme' -and $Value -eq 1
+                }
+                Should -Invoke Set-ItemProperty -Times 1 -Exactly -ParameterFilter {
+                    $Name -eq 'AppsUseLightTheme' -and $Value -eq 1
+                }
+            }
+        }
+
+        Context "Invoke-Lumos 'dark' (lowercase positional -Mode)" {
+
+            BeforeEach {
+                $InvokeLumos = Invoke-Lumos 'dark'
+            }
+
+            It 'Should still resolve to the Dark theme, since -Mode is case-insensitive' {
+                Should -Invoke Set-ItemProperty -Times 1 -Exactly -ParameterFilter {
+                    $Name -eq 'SystemUsesLightTheme' -and $Value -eq 0
+                }
+            }
+        }
+
+        Context "Invoke-Lumos 'Auto' (positional -Mode)" {
+
+            BeforeEach {
+                Mock Get-LocalDaylight {
+                    [pscustomobject]@{
+                        Sunrise = (Get-Date).AddHours(-1)
+                        Sunset  = (Get-Date).AddHours(1)
+                    }
+                }
+
+                $InvokeLumos = Invoke-Lumos 'Auto'
+            }
+
+            It 'Should return null' {
+                $InvokeLumos | Should -Be $null
+            }
+
+            It 'Should look up the current location and daylight times, as if -Auto had been specified' {
+                Should -Invoke Get-UserLocation -Times 1 -Exactly
+                Should -Invoke Get-LocalDaylight -Times 1 -Exactly
+            }
+
+            It 'Should set the Light theme, since it is currently between sunrise and sunset' {
+                Should -Invoke Set-ItemProperty -Times 1 -Exactly -ParameterFilter {
+                    $Name -eq 'SystemUsesLightTheme' -and $Value -eq 1
+                }
+            }
+        }
+
+        Context "Invoke-Lumos 'Purple' (invalid -Mode value)" {
+
+            It 'Should throw, since Purple is not a valid -Mode value' {
+                { Invoke-Lumos 'Purple' } | Should -Throw
+            }
+
+            It 'Should not set either theme value' {
+                { Invoke-Lumos 'Purple' } | Should -Throw
+                Should -Invoke Set-ItemProperty -Times 0 -Exactly
+            }
+        }
+
+        Context "Invoke-Lumos -Dark -Mode 'Light' (switch and -Mode both specified)" {
+
+            It 'Should throw, since -Dark and -Mode belong to different parameter sets' {
+                { Invoke-Lumos -Dark -Mode 'Light' } | Should -Throw
+            }
+        }
+
         Context 'Invoke-Lumos -Auto when it is currently daytime' {
 
             BeforeEach {
