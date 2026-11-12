@@ -5,7 +5,13 @@ Sets the Windows, Mac or Linux (GNOME) Theme to light or dark mode.
 
 ## SYNTAX
 
-### Dark (Default)
+### Mode (Default)
+```
+Invoke-Lumos [[-Mode] <String>] [-ExcludeSystem] [-RestartExplorer] [-IncludeOfficeProPlus] [-ExcludeApps]
+ [-DarkWallpaper <String>] [-LightWallpaper <String>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+```
+
+### Dark
 ```
 Invoke-Lumos [-Dark] [-ExcludeSystem] [-RestartExplorer] [-IncludeOfficeProPlus] [-ExcludeApps]
  [-DarkWallpaper <String>] [-LightWallpaper <String>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
@@ -77,7 +83,31 @@ Switches the current theme to its alternate, i.e.
 if it's Light it will switch to Dark and if
 Dark switch to Light.
 
+### EXAMPLE 7
+```
+Lumos Dark
+```
+
+Switches the OS theme to Dark, using the 'lumos' alias and the positional -Mode parameter.
+
 ## PARAMETERS
+
+### -Mode
+Specify 'Dark', 'Light' or 'Auto' as a positional argument, as an alternative to the -Dark,
+-Light and -Auto switches (e.g.
+\`Lumos Dark\`).
+
+```yaml
+Type: String
+Parameter Sets: Mode
+Aliases:
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
 
 ### -Dark
 Switch to the Dark OS theme.

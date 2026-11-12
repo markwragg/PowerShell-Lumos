@@ -1,6 +1,6 @@
 # Change Log
 
-## !Deploy 4.3.0
+## [4.3.0] - 2026-11-12
 
 * [Feature] `Invoke-Lumos` now accepts `Dark`, `Light` and `Auto` via a single positional `-Mode` parameter, e.g. `Invoke-Lumos Dark` or (combined with the existing `Lumos` alias) just `Lumos Dark`. The existing `-Dark`/`-Light`/`-Auto` switches still work exactly as before.
 
