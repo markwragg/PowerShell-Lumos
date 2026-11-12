@@ -9,6 +9,10 @@ Function Invoke-Lumos {
             whether it is currently before or after sunrise/sunset (-Auto), or (if none of those are
             specified) by toggling to whichever theme isn't currently active.
 
+        .PARAMETER Mode
+            Specify 'Dark', 'Light' or 'Auto' as a positional argument, as an alternative to the -Dark,
+            -Light and -Auto switches (e.g. `Lumos Dark`).
+
         .PARAMETER Dark
             Switch to the Dark OS theme.
 
@@ -80,9 +84,19 @@ Function Invoke-Lumos {
 
             Switches the current theme to its alternate, i.e. if it's Light it will switch to Dark and if
             Dark switch to Light.
+
+        .Example
+            Lumos Dark
+
+            Switches the OS theme to Dark, using the 'lumos' alias and the positional -Mode parameter.
     #>
-    [cmdletbinding(DefaultParameterSetName = 'Dark')]
+    [cmdletbinding(DefaultParameterSetName = 'Mode')]
     Param(
+        [Parameter(ParameterSetName = 'Mode', Position = 0)]
+        [ValidateSet('Dark', 'Light', 'Auto')]
+        [string]
+        $Mode,
+
         [Parameter(ParameterSetName = 'Dark')]
         [switch]
         $Dark,
@@ -113,6 +127,12 @@ Function Invoke-Lumos {
         [string]
         $LightWallpaper = (Get-LumosDefaultValue -Name 'LightWallpaper' -Value $null)
     )
+
+    switch ($Mode) {
+        'Dark' { $Dark = $true }
+        'Light' { $Light = $true }
+        'Auto' { $Auto = $true }
+    }
 
     if ($Dark) {
         $Lumos = 0

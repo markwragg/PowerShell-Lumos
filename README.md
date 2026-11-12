@@ -50,6 +50,14 @@ Invoke-Lumos -Dark
 Invoke-Lumos -Light
 ```
 
+Or, since `Dark`/`Light`/`Auto` are also available via a single positional `-Mode` argument, more concisely with the `Lumos` alias:
+
+```PowerShell
+Lumos Dark
+
+Lumos Light
+```
+
 Or you can have Lumos decide automatically, based on your location (determined from your public IP address) and whether it is currently before or after sunrise/sunset there:
 
 ```PowerShell
