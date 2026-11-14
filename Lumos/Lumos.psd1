@@ -107,7 +107,7 @@ PrivateData = @{
         # IconUri = ''
 
         # ReleaseNotes of this module
-        # ReleaseNotes = ''
+        ReleaseNotes = 'https://github.com/markwragg/powershell-lumos/blob/master/CHANGELOG.md'
 
         # Prerelease string of this module
         # Prerelease = ''
